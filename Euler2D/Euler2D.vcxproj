@@ -61,9 +61,41 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
+    <ClCompile Include="AirPerfect.cpp" />
+    <ClCompile Include="Boundary.cpp" />
+    <ClCompile Include="BoundaryDirichlet.cpp" />
+    <ClCompile Include="BoundaryMixed.cpp" />
+    <ClCompile Include="BoundaryNeumann.cpp" />
+    <ClCompile Include="Cell.cpp" />
+    <ClCompile Include="Config.cpp" />
+    <ClCompile Include="Fluid.cpp" />
+    <ClCompile Include="Flux.cpp" />
+    <ClCompile Include="FluxAUSMup.cpp" />
+    <ClCompile Include="FluxRoe.cpp" />
+    <ClCompile Include="Limiter.cpp" />
+    <ClCompile Include="LimiterMUSCL.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="PerfectGas.cpp" />
+    <ClCompile Include="TimeStep.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AirPerfect.h" />
+    <ClInclude Include="Boundary.h" />
+    <ClInclude Include="BoundaryDirichlet.h" />
+    <ClInclude Include="BoundaryMixed.h" />
+    <ClInclude Include="BoundaryNeumann.h" />
+    <ClInclude Include="Cell.h" />
+    <ClInclude Include="Config.h" />
+    <ClInclude Include="Fluid.h" />
+    <ClInclude Include="Flux.h" />
+    <ClInclude Include="FluxAUSMup.h" />
+    <ClInclude Include="FluxRoe.h" />
+    <ClInclude Include="Limiter.h" />
+    <ClInclude Include="LimiterMUSCL.h" />
+    <ClInclude Include="Mesh.h" />
+    <ClInclude Include="PerfectGas.h" />
+    <ClInclude Include="TimeStep.h" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
