@@ -6,5 +6,12 @@ class PerfectGas :
 public:
 	PerfectGas();
 	~PerfectGas();
+
+	double getSoundSpeed();
+	double getPressure();
+	double getTemperature();
+	double getEnthalpy();
+
+	double getGamma();
 };
 

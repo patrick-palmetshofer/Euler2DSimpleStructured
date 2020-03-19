@@ -68,16 +68,19 @@
     <ClCompile Include="BoundaryNeumann.cpp" />
     <ClCompile Include="Cell.cpp" />
     <ClCompile Include="Config.cpp" />
+    <ClCompile Include="Face.cpp" />
     <ClCompile Include="Fluid.cpp" />
     <ClCompile Include="Flux.cpp" />
     <ClCompile Include="FluxAUSMup.cpp" />
     <ClCompile Include="FluxRoe.cpp" />
+    <ClCompile Include="Grid.cpp" />
     <ClCompile Include="Limiter.cpp" />
     <ClCompile Include="LimiterMUSCL.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="PerfectGas.cpp" />
-    <ClCompile Include="TimeStep.cpp" />
+    <ClCompile Include="Solver.cpp" />
+    <ClCompile Include="TimeStepper.cpp" />
+    <ClCompile Include="TimeStepperExplicit.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AirPerfect.h" />
@@ -87,15 +90,18 @@
     <ClInclude Include="BoundaryNeumann.h" />
     <ClInclude Include="Cell.h" />
     <ClInclude Include="Config.h" />
+    <ClInclude Include="Face.h" />
     <ClInclude Include="Fluid.h" />
     <ClInclude Include="Flux.h" />
     <ClInclude Include="FluxAUSMup.h" />
     <ClInclude Include="FluxRoe.h" />
+    <ClInclude Include="Grid.h" />
     <ClInclude Include="Limiter.h" />
     <ClInclude Include="LimiterMUSCL.h" />
-    <ClInclude Include="Mesh.h" />
     <ClInclude Include="PerfectGas.h" />
-    <ClInclude Include="TimeStep.h" />
+    <ClInclude Include="Solver.h" />
+    <ClInclude Include="TimeStepper.h" />
+    <ClInclude Include="TimeStepperExplicit.h" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
