@@ -19,12 +19,12 @@ class FluxRoe :
 {
 protected:
 	Fluid * fluid;
+	ConservativeVariables calcPhysicalFlux(PrimitiveVariables prim);
 public:
 	FluxRoe();
+	FluxRoe(Fluid * newfluid);
 	~FluxRoe();
 
-	void calcRoeAverages(Cell *cell);
-
-	double calcFlux(Cell *leftCell, Cell *rightCell);
+	ConservativeVariables calcFlux(PrimitiveVariables &prim_left, PrimitiveVariables &prim_right);
 };
 

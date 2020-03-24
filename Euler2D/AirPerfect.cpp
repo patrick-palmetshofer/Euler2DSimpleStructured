@@ -2,7 +2,7 @@
 
 
 
-AirPerfect::AirPerfect()
+AirPerfect::AirPerfect() : PerfectGas(28.9647,1005)
 {
 }
 

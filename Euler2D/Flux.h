@@ -3,10 +3,10 @@
 
 class Flux
 {
-protected:
 public:
 	Flux();
 	virtual ~Flux();
 
-	virtual double calcFlux(Cell *leftCell, Cell *rightCell);
+	virtual ConservativeVariables calcFlux(PrimitiveVariables &prim_left, PrimitiveVariables &prim_right);
+	
 };

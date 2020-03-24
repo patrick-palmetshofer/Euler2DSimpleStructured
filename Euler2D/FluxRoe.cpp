@@ -6,14 +6,24 @@ RoeAverages::RoeAverages()
 {
 }
 
-RoeAverages::RoeAverages(Cell * cell)
+//Calculate phsysical flux. Note: Coordinate system must have been rotated perpendicular to face
+ConservativeVariables FluxRoe::calcPhysicalFlux(PrimitiveVariables prim)
 {
-	prim = cell->getPrimitive();
+	ConservativeVariables flux;
+	flux[0] = prim.rho*prim.u;
+	flux[1] = prim.rho*prim.u*prim.u + fluid->getPressure();
+	flux[2] = prim.rho*prim.u*prim.v;
+	flux[3] = prim.rho*(fluid->getEnthalpy()+ prim.u*prim.u + prim.v*prim.v);
+	return flux;
 }
-
 
 FluxRoe::FluxRoe()
 {
+}
+
+FluxRoe::FluxRoe(Fluid * newfluid)
+{
+	fluid = newfluid;
 }
 
 
@@ -26,12 +36,10 @@ FluxRoe::~FluxRoe()
 //Calculates the exact solution of the linear equation
 // u_t + A_lr u_x = 0
 // Where A_lr(u,u) = A(u)
-double FluxRoe::calcFlux(Cell * leftCell, Cell * rightCell)
+ConservativeVariables FluxRoe::calcFlux(PrimitiveVariables &prim_left, PrimitiveVariables &prim_right)
 {
-	PrimitiveVariables prim_right = rightCell->getPrimitive();
-	PrimitiveVariables prim_left = leftCell->getPrimitive();
 
-	double gamma =fluid->getGamma();
+	double gamma = fluid->getGamma();
 
 	double sqrtrho_right = std::sqrt(prim_right.rho);
 	double sqrtrho_left = std::sqrt(prim_left.rho);
@@ -41,8 +49,8 @@ double FluxRoe::calcFlux(Cell * leftCell, Cell * rightCell)
 	double u = (sqrtrho_right*prim_right.u + sqrtrho_left*prim_left.u)/(sqrtrho_right + sqrtrho_left);
 	double v = (sqrtrho_right*prim_right.v + sqrtrho_left * prim_left.v) / (sqrtrho_right + sqrtrho_left);
 
-	double Hright = rightCell->getFluid()->getEnthalpy(); //TODO 
-	double Hleft = rightCell->getFluid()->getEnthalpy(); // TODO
+	double Hright = fluid->getEnthalpy(); 
+	double Hleft = fluid->getEnthalpy();
 
 	double h = (sqrtrho_right*Hright + sqrtrho_left * Hleft) / (sqrtrho_right + sqrtrho_left);
 
@@ -68,7 +76,7 @@ double FluxRoe::calcFlux(Cell * leftCell, Cell * rightCell)
 		1,
 		u,
 		v,
-		0.5*(u^2 + v ^ 2)
+		0.5*(u*u + v*v)
 	};
 	roevectors[2] = {
 		0,
@@ -91,15 +99,15 @@ double FluxRoe::calcFlux(Cell * leftCell, Cell * rightCell)
 
 	//Calculate Roe Factors
 	Euler2DVector roefactors;
-	roefactors[1] = -(gamma - 1) / c ^ 2 * (Drho*(u^2-h)-u*Dmu+Deavg);
+	roefactors[1] = -(gamma - 1) / (c*c) * (Drho*(u*u-h)-u*Dmu+Deavg);
 	roefactors[0] = -1 /(2*c) * (Dmu-Drho*(u+c)-0.5*roefactors[1]);
 	roefactors[3] = Drho - roefactors[0] - roefactors[1];
 	roefactors[2] = Dmv - v * Drho;
 
-	std::valarray<double> flux = 0.5*(rightCell->getFlux(), leftCell->getFlux());
+	ConservativeVariables flux = 0.5*(calcPhysicalFlux(prim_right) + calcPhysicalFlux(prim_left));
 	for (int i = 0; i < 4; i++)
 	{
 		flux += roefactors[i] * std::abs(eigenvals[i])*roevectors[i];
 	}
-	return &flux;
+	return flux;
 }

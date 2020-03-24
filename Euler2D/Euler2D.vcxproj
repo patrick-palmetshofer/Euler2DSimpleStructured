@@ -75,7 +75,8 @@
     <ClCompile Include="FluxRoe.cpp" />
     <ClCompile Include="Grid.cpp" />
     <ClCompile Include="Limiter.cpp" />
-    <ClCompile Include="LimiterMUSCL.cpp" />
+    <ClCompile Include="LimiterMinmod.cpp" />
+    <ClCompile Include="LimiterMCvanLeer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PerfectGas.cpp" />
     <ClCompile Include="Solver.cpp" />
@@ -97,7 +98,8 @@
     <ClInclude Include="FluxRoe.h" />
     <ClInclude Include="Grid.h" />
     <ClInclude Include="Limiter.h" />
-    <ClInclude Include="LimiterMUSCL.h" />
+    <ClInclude Include="LimiterMinmod.h" />
+    <ClInclude Include="LimiterMCvanLeer.h" />
     <ClInclude Include="PerfectGas.h" />
     <ClInclude Include="Solver.h" />
     <ClInclude Include="TimeStepper.h" />

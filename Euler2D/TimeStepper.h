@@ -7,7 +7,7 @@ class TimeStepper
 {
 protected:
 	Grid grid;
-	std::vector<std::vector<Cell>> structuredCells;
+	std::vector<std::vector<Cell>> *structuredCells;
 public:
 	TimeStepper();
 	virtual ~TimeStepper();
