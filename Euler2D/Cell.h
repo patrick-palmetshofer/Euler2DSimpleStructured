@@ -1,102 +1,15 @@
 #pragma once
 #include <valarray>
+#include <memory>
 #include "Fluid.h"
 #include "Face.h"
 #include "Flux.h"
 #include "Limiter.h"
 #include "Config.h"
 
-class Euler2DVector :
-	public std::valarray<double>
-{
-public:
-	using std::valarray<double>::valarray;
-	using std::valarray<double>::operator*=;
-	using std::valarray<double>::operator=;
-
-	Euler2DVector operator* (double scalar)
-	{
-		Euler2DVector v = *(this);
-		v *= scalar;
-		return v;
-	}	
-};
-
-class PrimitiveVariables :
-	public Euler2DVector
-{
-public:
-	using std::valarray<double>::valarray;
-	using std::valarray<double>::operator*=;
-	using Euler2DVector::Euler2DVector;
-
-	double &rho = (*this)[0];
-	double &u = (*this)[1];
-	double &v = (*this)[2];
-	double &e = (*this)[3];
-
-	PrimitiveVariables operator= (PrimitiveVariables p)
-	{
-		PrimitiveVariables v = p;
-		return v;
-	}
-
-	PrimitiveVariables operator* (double scalar)
-	{
-		PrimitiveVariables v = *(this);
-		v *= scalar;
-		return v;
-	}
-
-	PrimitiveVariables operator= (ConservativeVariables &c)
-	{
-		PrimitiveVariables p;
-		p.rho = c.rho;
-		p.u = c.rhou / p.rho;
-		p.v = c.rhov / p.rho;
-		double kinetic = 0.5*p.rho*(p.u*p.u + p.v*p.v);
-		p.e = (c.rhoet - kinetic) / p.rho;
-	}
-};
-
-class ConservativeVariables :
-	public Euler2DVector
-{
-public:
-	using std::valarray<double>::valarray;
-	using std::valarray<double>::operator*=;
-	using Euler2DVector::Euler2DVector;
-	using Euler2DVector::operator*;
-
-	double &rho = (*this)[0];
-	double &rhou = (*this)[1];
-	double &rhov = (*this)[2];
-	double &rhoet = (*this)[3];
-
-	ConservativeVariables operator= (ConservativeVariables p)
-	{
-		ConservativeVariables v = p;
-		return v;
-	}
-
-	ConservativeVariables operator= (PrimitiveVariables &p)
-	{
-		ConservativeVariables c;
-		c.rho = p.rho;
-		c.rhou = p.rho*p.u;
-		c.rhov = p.rho*p.v;
-		double kinetic = 0.5*p.rho*(p.u*p.u + p.v*p.v);
-		c.rhoet = p.rho*p.e + kinetic;
-		return c;
-	}
-
-	ConservativeVariables operator* (double scalar)
-	{
-		ConservativeVariables v = *(this);
-		v *= scalar;
-		return v;
-	}
-};
+#include "PrimitiveVariables.h"
+#include "ConservativeVariables.h"
+#include "Jacobian.h"
 
 class Cell
 {
@@ -108,15 +21,15 @@ protected:
 
 	Limiter *limiter;
 
-	Face* leftface;
-	Face* rightface;
-	Face* upface;
-	Face* downface;
+	Face* xi_pos;
+	Face* xi_neg;
+	Face* eta_pos;
+	Face* eta_neg;
 
-	Cell *left;
-	Cell *right;
-	Cell *up;
-	Cell *down;
+	std::shared_ptr<Cell> left;
+	std::shared_ptr<Cell> right;
+	std::shared_ptr<Cell> up;
+	std::shared_ptr<Cell> down;
 
 	//NOTE: Cell variables are in computational space!
 	// Primitive variables consisting of rho, u, v, et
@@ -135,9 +48,6 @@ protected:
 	PrimitiveVariables rightstate;
 	PrimitiveVariables downstate;
 
-	ConservativeVariables rightflux;
-	ConservativeVariables downflux;
-
 	template<class T> T swapUV(T oldT)
 	{
 		T newT;
@@ -147,22 +57,17 @@ protected:
 	}
 
 public:
-	Cell(Config &cfg);
-	Cell(double volume,
-	double Sxi,
-	double Seta,
-	double Sxix,
-	double Sxiy,
-	double Setax,
-	double Setay, Config &cfg);
+	Cell(double volume, Face * xi_neg, Face * xi_pos, Face * eta_neg, Face * eta_pos, Config & cfg);
 	~Cell();
 
-	void setNeighbors(Cell* leftcell, Cell* rightcell, Cell* upcell, Cell* downcell);
+	void setNeighbors(std::shared_ptr<Cell> left, std::shared_ptr<Cell> right, std::shared_ptr<Cell> up, std::shared_ptr<Cell> down);
 	void setPrimitive(PrimitiveVariables new_primitive);
 	void setConservative(ConservativeVariables new_conservative);
 
 	PrimitiveVariables *getPrimitive();
 	ConservativeVariables *getConservative();
+
+	double getVolume();
 
 	void reconstructStates();
 
@@ -171,19 +76,12 @@ public:
 	PrimitiveVariables *getUpState();
 	PrimitiveVariables *getDownState();
 
-	ConservativeVariables *getLeftFlux();
-	ConservativeVariables *getUpFlux();
-	ConservativeVariables *getRightFlux();
-	ConservativeVariables *getDownFlux();
+	std::shared_ptr<Cell> getLeftCell();
+	std::shared_ptr<Cell> getRightCell();
+	std::shared_ptr<Cell> getUpCell();
+	std::shared_ptr<Cell> getDownCell();
 
-	Cell *getLeftCell();
-	Cell *getRightCell();
-	Cell *getUpCell();
-	Cell *getDownCell();
+	ConservativeVariables getSumFaceFluxes();
 
 	Fluid * getFluid();
-	double getCdeltat();
-
-	void calcRightFlux();
-	void calcDownFlux();
 };

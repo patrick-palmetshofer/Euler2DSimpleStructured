@@ -1,7 +1,19 @@
-#include <cstdio>
+#include <iostream>
+#include "Grid.h"
+#include "TimeStepperExplicit.h"
+#include "Solution.h"
 
 int main()
 {
-    printf("hello from Euler2D!\n");
-    return 0;
+	Grid grid;
+	grid.readGrid("grid.su2");
+	TimeStepperExplicit timestepper(grid);
+	Solution solution(grid);
+
+	while (timestepper.getTime() < 10)
+	{
+		timestepper.executeTimeStepGlobal();
+	}
+
+	solution.write("Result.txt");
 }

@@ -73,12 +73,14 @@
     <ClCompile Include="Flux.cpp" />
     <ClCompile Include="FluxAUSMup.cpp" />
     <ClCompile Include="FluxRoe.cpp" />
+    <ClCompile Include="GhostCell.cpp" />
     <ClCompile Include="Grid.cpp" />
     <ClCompile Include="Limiter.cpp" />
     <ClCompile Include="LimiterMinmod.cpp" />
     <ClCompile Include="LimiterMCvanLeer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PerfectGas.cpp" />
+    <ClCompile Include="Solution.cpp" />
     <ClCompile Include="Solver.cpp" />
     <ClCompile Include="TimeStepper.cpp" />
     <ClCompile Include="TimeStepperExplicit.cpp" />
@@ -91,19 +93,27 @@
     <ClInclude Include="BoundaryNeumann.h" />
     <ClInclude Include="Cell.h" />
     <ClInclude Include="Config.h" />
+    <ClInclude Include="ConservativeVariables.h" />
     <ClInclude Include="Face.h" />
     <ClInclude Include="Fluid.h" />
     <ClInclude Include="Flux.h" />
     <ClInclude Include="FluxAUSMup.h" />
     <ClInclude Include="FluxRoe.h" />
+    <ClInclude Include="GhostCell.h" />
     <ClInclude Include="Grid.h" />
+    <ClInclude Include="Jacobian.h" />
     <ClInclude Include="Limiter.h" />
     <ClInclude Include="LimiterMinmod.h" />
     <ClInclude Include="LimiterMCvanLeer.h" />
     <ClInclude Include="PerfectGas.h" />
+    <ClInclude Include="PrimitiveVariables.h" />
+    <ClInclude Include="Solution.h" />
     <ClInclude Include="Solver.h" />
     <ClInclude Include="TimeStepper.h" />
     <ClInclude Include="TimeStepperExplicit.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="exampleGrid.txt" />
   </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

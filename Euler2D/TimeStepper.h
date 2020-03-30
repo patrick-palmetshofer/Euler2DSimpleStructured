@@ -6,8 +6,9 @@
 class TimeStepper
 {
 protected:
-	Grid grid;
-	std::vector<std::vector<Cell>> *structuredCells;
+	std::vector<std::shared_ptr<Cell>> cells;
+	std::vector<std::shared_ptr<Face>> faces;
+	std::vector<std::shared_ptr<GhostCell>> boundaryCells;
 public:
 	TimeStepper();
 	virtual ~TimeStepper();

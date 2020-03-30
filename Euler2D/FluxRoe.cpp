@@ -7,13 +7,13 @@ RoeAverages::RoeAverages()
 }
 
 //Calculate phsysical flux. Note: Coordinate system must have been rotated perpendicular to face
-ConservativeVariables FluxRoe::calcPhysicalFlux(PrimitiveVariables prim)
+ConservativeVariables FluxRoe::calcPhysicalFlux(PrimitiveVariables &prim)
 {
 	ConservativeVariables flux;
 	flux[0] = prim.rho*prim.u;
-	flux[1] = prim.rho*prim.u*prim.u + fluid->getPressure();
+	flux[1] = prim.rho*prim.u*prim.u + fluid->getPressure(prim);
 	flux[2] = prim.rho*prim.u*prim.v;
-	flux[3] = prim.rho*(fluid->getEnthalpy()+ prim.u*prim.u + prim.v*prim.v);
+	flux[3] = prim.rho*(fluid->getEnthalpy(prim)+ prim.u*prim.u + prim.v*prim.v);
 	return flux;
 }
 
@@ -58,7 +58,7 @@ ConservativeVariables FluxRoe::calcFlux(PrimitiveVariables &prim_left, Primitive
 	//double vel;
 
 	//Calculate Eigenvalues
-	Euler2DVector eigenvals;
+	PrimitiveVariables eigenvals;
 	eigenvals[0] = u - c;
 	eigenvals[1] = u;
 	eigenvals[2] = u;
@@ -98,7 +98,7 @@ ConservativeVariables FluxRoe::calcFlux(PrimitiveVariables &prim_left, Primitive
 	double Deavg = prim_right.e - prim_left.e - (Dmv-v*Drho)*v;
 
 	//Calculate Roe Factors
-	Euler2DVector roefactors;
+	PrimitiveVariables roefactors;
 	roefactors[1] = -(gamma - 1) / (c*c) * (Drho*(u*u-h)-u*Dmu+Deavg);
 	roefactors[0] = -1 /(2*c) * (Dmu-Drho*(u+c)-0.5*roefactors[1]);
 	roefactors[3] = Drho - roefactors[0] - roefactors[1];

@@ -1,19 +1,26 @@
 #include "TimeStepperExplicit.h"
 
-
-
-TimeStepperExplicit::TimeStepperExplicit()
+TimeStepperExplicit::TimeStepperExplicit(std::vector<std::shared_ptr<Cell>>& cells, std::vector<std::shared_ptr<Face>>& faces)
 {
+	this->cells = cells;
+	this->faces = faces;
+	time = 0;
 }
 
+TimeStepperExplicit::TimeStepperExplicit(Grid & grid)
+{
+	cells = grid.getCells();
+	faces = grid.getFaces();
+	time = 0;
+}
 
 TimeStepperExplicit::~TimeStepperExplicit()
 {
 }
 
-ConservativeVariables TimeStepperExplicit::spaceDisc(Cell &cell)
+ConservativeVariables TimeStepperExplicit::spaceDisc(std::shared_ptr<Cell> &cell)
 {
-	ConservativeVariables spacedisc = *cell.getRightFlux() - *cell.getLeftFlux() + *cell.getDownFlux() - *cell.getUpFlux();
+	ConservativeVariables spacedisc = cell->getSumFaceFluxes();
 	return spacedisc;
 }
 
@@ -28,56 +35,59 @@ ConservativeVariables TimeStepperExplicit::spaceDisc(Cell &cell)
 //	return consnew;
 //}
 
-ConservativeVariables TimeStepperExplicit::executeFirstOrderBackward(Cell &cell, double dt)
+ConservativeVariables TimeStepperExplicit::executeFirstOrderBackward(std::shared_ptr<Cell> &cell, double dt)
 {
-	ConservativeVariables consnew = *(cell.getConservative()) - spaceDisc(cell)*dt;
+	ConservativeVariables consnew = *(cell->getConservative()) - spaceDisc(cell)*dt/cell->getVolume();
 	return consnew;
 }
 
 //TODO:: Move all from loops to recursion
 
 //Returns global time step and calculates fluxes in cells
-double TimeStepperExplicit::reconstructAndMaxCFLGlobal()
+void TimeStepperExplicit::reconstruct()
 {
-	double dt = 1e19;
-	for (auto row : *structuredCells)
+	
+	for (auto cell : cells)
 	{
-		for (auto cell : row)
-		{
-			cell.reconstructStates();
-			double dtlocal = maxCFL/cell.getCdeltat();
-			if (dtlocal < dt)
-				dt = dtlocal;
-		}
-	}
-	return dt;
-}
+		cell->reconstructStates();
 
-void TimeStepperExplicit::calcFluxes()
+	}
+	
+}
+double TimeStepperExplicit::maxTimeStep()
 {
-	for (auto row : *structuredCells)
+	for (auto face : faces)
 	{
-		for (auto cell : row)
-		{
-			cell.calcDownFlux();
-			cell.calcRightFlux();
-		}
+		double dt = 1e19;
+		double dtlocal = maxCFL / face->getVelNorm();
+		if (dtlocal < dt)
+			dt = dtlocal;
+		return dt;
 	}
 }
 
 void TimeStepperExplicit::executeTimeStepGlobal()
 {
-	double timestep = reconstructAndMaxCFLGlobal();
-	calcFluxes();
-
-	for (auto rowit = structuredCells->begin(); rowit != structuredCells->end(); rowit++)
+	reconstruct();
+	double timestep = maxTimeStep();
+	
+	for (auto cell : boundaryCells)
 	{
-		auto &row = *rowit;
-		for (auto cellit = row.begin(); cellit != row.end(); cellit++)
-		{
-			auto &cell = *cellit;
-			ConservativeVariables consnew = executeFirstOrderBackward(cell, timestep);
-			cell.setConservative(consnew);
-		}
+		cell.applyBC();
 	}
+	for (auto face : faces)
+	{
+		calcFluxes();
+	}
+	for (auto cell : cells)
+	{
+		ConservativeVariables consnew = executeFirstOrderBackward(cell, timestep);
+		cell->setConservative(consnew);
+	}
+	time += timestep;
+}
+
+double TimeStepperExplicit::getTime()
+{
+	return time;
 }

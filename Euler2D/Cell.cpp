@@ -1,31 +1,20 @@
 #include "Cell.h"
 
-Cell::Cell(Config &cfg)
+Cell::Cell(double volume, Face * xi_neg, Face * xi_pos, Face * eta_neg, Face * eta_pos, Config & cfg)
 {
-	Cell(1, 1, 1, 1, 1, 1, 1, cfg);
-}
-
-Cell::Cell(double volume, double Sxi, double Seta, double Sxix, double Sxiy, double Setax, double Setay, Config &cfg)
-{
-	this->volume= volume;
-
+	this->volume = volume;
+	this->xi_neg = xi_neg;
+	this->xi_pos = xi_pos;
+	this->eta_neg = eta_neg;
+	this->eta_pos = eta_pos;
 
 	limiter = cfg.getLimiter();
-	flux = cfg.getFlux();
 	fluid = cfg.getFluid();
 }
 
 
 Cell::~Cell()
 {
-}
-
-void Cell::setNeighbors(Cell * leftcell, Cell * rightcell, Cell * upcell, Cell * downcell)
-{
-	left = leftcell;
-	right = rightcell;
-	up = upcell;
-	down = downcell;
 }
 
 void Cell::reconstructStates()
@@ -36,11 +25,21 @@ void Cell::reconstructStates()
 	PrimitiveVariables rsvert = (*down->getPrimitive() - primitive) / (primitive - *up->getPrimitive());
 	PrimitiveVariables yphis = limiter->calcPhis(rsvert);
 
+	
+
 	rightstate = primitive + 0.25*reconstructepsilon*(primitive - *(left->getPrimitive()))*((1 - reconstructkappa)*xphis + (1 + reconstructkappa)*rshoriz / xphis);
 	leftstate = primitive - 0.25*reconstructepsilon*(primitive - *(left->getPrimitive()))*((1 - reconstructkappa)*xphis + (1 + reconstructkappa)*rshoriz / xphis);
 
 	upstate = primitive + 0.25*reconstructepsilon*(primitive - *(up->getPrimitive()))*((1 - reconstructkappa)*xphis + (1 + reconstructkappa)*rsvert / xphis);
 	downstate = primitive - 0.25*reconstructepsilon*(primitive - *(up->getPrimitive()))*((1 - reconstructkappa)*xphis + (1 + reconstructkappa)*rsvert / xphis);
+}
+
+void Cell::setNeighbors(std::shared_ptr<Cell> left, std::shared_ptr<Cell> right, std::shared_ptr<Cell> up, std::shared_ptr<Cell> down)
+{
+	this->left = left;
+	this->right = right;
+	this->up = up;
+	this->down = down;
 }
 
 void Cell::setPrimitive(PrimitiveVariables new_primitive)
@@ -65,44 +64,29 @@ PrimitiveVariables *Cell::getDownState()
 	return &downstate;
 }
 
-ConservativeVariables * Cell::getLeftFlux()
-{
-	return left->getRightFlux();
-}
-
-ConservativeVariables * Cell::getUpFlux()
-{
-	return up->getDownFlux();
-}
-
-ConservativeVariables * Cell::getRightFlux()
-{
-	return &rightflux;
-}
-
-ConservativeVariables * Cell::getDownFlux()
-{
-	return &downflux;
-}
-
-Cell * Cell::getLeftCell()
+std::shared_ptr<Cell> Cell::getLeftCell()
 {
 	return left;
 }
 
-Cell * Cell::getRightCell()
+std::shared_ptr<Cell> Cell::getRightCell()
 {
 	return right;
 }
 
-Cell * Cell::getUpCell()
+std::shared_ptr<Cell> Cell::getUpCell()
 {
 	return up;
 }
 
-Cell * Cell::getDownCell()
+std::shared_ptr<Cell> Cell::getDownCell()
 {
 	return down;
+}
+
+ConservativeVariables Cell::getSumFaceFluxes()
+{
+	return xi_pos->getIntFlux() - xi_neg->getIntFlux() + eta_pos->getIntFlux() - eta_neg->getIntFlux();
 }
 
 PrimitiveVariables *Cell::getRightState()
@@ -125,26 +109,12 @@ ConservativeVariables* Cell::getConservative()
 	return &conservative;
 }
 
+double Cell::getVolume()
+{
+	return volume;
+}
+
 Fluid * Cell::getFluid()
 {
 	return fluid;
-}
-
-double Cell::getCdeltat()
-{
-	return primitive.u / xsize + primitive.v / ysize;
-}
-
-void Cell::calcRightFlux()
-{
-	//rightstate is left state of interface
-	rightflux = flux->calcFlux(rightstate, *(right->getLeftState()));
-}
-
-void Cell::calcDownFlux()
-{
-	PrimitiveVariables rotatedright = swapUV(primitive);
-	PrimitiveVariables rotatedleft = swapUV(*(right->getLeftState()));
-	ConservativeVariables rflux = flux->calcFlux(rotatedright, rotatedleft);
-	downflux = swapUV(rflux);
 }

@@ -11,7 +11,6 @@ public:
 	double H;
 
 	RoeAverages();
-	RoeAverages(Cell *cell);
 };
 
 class FluxRoe :
@@ -19,7 +18,7 @@ class FluxRoe :
 {
 protected:
 	Fluid * fluid;
-	ConservativeVariables calcPhysicalFlux(PrimitiveVariables prim);
+	ConservativeVariables calcPhysicalFlux(PrimitiveVariables &prim);
 public:
 	FluxRoe();
 	FluxRoe(Fluid * newfluid);

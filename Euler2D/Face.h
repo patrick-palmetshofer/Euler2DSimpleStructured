@@ -1,17 +1,46 @@
 #pragma once
 #include "Cell.h"
+#include "Config.h"
 #include <vector>
 class Face
 {
 private:
-	double Area;
-	std::array<std::array<double, 2>,2> physcoord;
-	PrimitiveVariables leftstate;
-	PrimitiveVariables rightstate;
+	Config *cfg;
+	Flux *flux;
+	Fluid *fluid;
+
+	PrimitiveVariables *leftstate;
+	PrimitiveVariables *rightstate;
+
+	PrimitiveVariables leftstate_normal;
+	PrimitiveVariables rightstate_normal;
+
+	ConservativeVariables numflux;
+	PrimitiveVariables numflux_normal;
+
+	double S; //Area
+
+	double Sx; //x projected Area
+	double Sy; //y projected Area
+
+	double SxS;
+	double SyS;
+
+	void calcNormalStates();
+
+	void calcPhysFlux();
 
 public:
-	Face();
-	Face(double x1, double x2, double y1, double y2);
+	Face(double S, double Sx, double Sy, Config *cfg);
+	void setLeftRight(PrimitiveVariables * leftstate, PrimitiveVariables * rightstate);
 	~Face();
+
+	void calcFlux();
+	ConservativeVariables getFlux();
+
+	ConservativeVariables getIntFlux();
+
+	double getVelNorm();
+
 };
 

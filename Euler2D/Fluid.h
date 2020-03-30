@@ -1,24 +1,15 @@
 #pragma once
 class Fluid
 {
-protected:
-	double density;
-	double pressure;
-	double temperature;
-	double soundspeed;
-	double internalenergy;
-	double enthalpy;
-
 public:
 	Fluid();
 	virtual ~Fluid();
 	//virtual double pEOS(rho,)
 
-	virtual double getSoundSpeed();
-	virtual double getPressure();
-	virtual double getTemperature();
-	virtual double getEnthalpy();
-
-	virtual double getGamma();
+	virtual double getSoundSpeed(PrimitiveVariables &prim);
+	virtual double getPressure(PrimitiveVariables &prim);
+	virtual double getTemperature(PrimitiveVariables &prim);
+	virtual double getEnthalpy(PrimitiveVariables &prim);
+	virtual double getGamma(PrimitiveVariables &prim);
 };
 
