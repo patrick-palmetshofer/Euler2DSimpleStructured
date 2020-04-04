@@ -1,6 +1,7 @@
 #pragma once
 #include "Cell.h"
 #include "GhostCell.h"
+#include "StructuredBoundary.h"
 #include <string>
 #include <vector>
 #include <memory>
@@ -25,7 +26,18 @@ protected:
 public:
 	Grid();
 	~Grid();
-	 
+
+	void readGridGridPro(std::string filename);
+
+	template <typename T>
+	void setLeftBoundaryCondition(StructuredBoundary * b);
+	template <typename T>
+	void setRightBoundaryCondition(StructuredBoundary * b);
+	template <typename T>
+	void setUpBoundaryCondition(StructuredBoundary * b);
+	template <typename T>
+	void setDownBoundaryCondition(StructuredBoundary * b);
+
 	void readGrid(std::string filename);
 	void constructCells();
 	std::vector<std::shared_ptr<Cell>> getCells();

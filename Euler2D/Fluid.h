@@ -1,4 +1,5 @@
 #pragma once
+#include "PrimitiveVariables.h"
 class Fluid
 {
 public:
@@ -12,4 +13,3 @@ public:
 	virtual double getEnthalpy(PrimitiveVariables &prim);
 	virtual double getGamma(PrimitiveVariables &prim);
 };
-

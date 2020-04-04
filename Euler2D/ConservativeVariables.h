@@ -1,5 +1,6 @@
 #pragma once
 #include <valarray>
+#include "DeclareConsPrim.h"
 #include "PrimitiveVariables.h"
 
 class ConservativeVariables :
@@ -14,22 +15,9 @@ public:
 	double &rhov = (*this)[2];
 	double &rhoet = (*this)[3];
 
-	ConservativeVariables operator= (ConservativeVariables &p)
-	{
-		ConservativeVariables v = p;
-		return v;
-	}
+	ConservativeVariables operator= (ConservativeVariables &p);
+	ConservativeVariables operator= (PrimitiveVariables &p);
 
-	ConservativeVariables operator= (PrimitiveVariables &p)
-	{
-		ConservativeVariables c;
-		c.rho = p.rho;
-		c.rhou = p.rho*p.u;
-		c.rhov = p.rho*p.v;
-		double kinetic = 0.5*p.rho*(p.u*p.u + p.v*p.v);
-		c.rhoet = p.rho*p.e + kinetic;
-		return c;
-	}
 
 	//ConservativeVariables()
 	//{
@@ -40,10 +28,6 @@ public:
 	//	*this = p;
 	//}
 
-	ConservativeVariables operator* (double scalar)
-	{
-		ConservativeVariables v = *(this);
-		v *= scalar;
-		return v;
-	}
+	ConservativeVariables operator* (double scalar);
+
 };

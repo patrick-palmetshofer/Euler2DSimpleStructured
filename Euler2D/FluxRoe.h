@@ -1,5 +1,6 @@
 #pragma once
 #include "Flux.h"
+#include "Fluid.h"
 
 class RoeAverages
 {

@@ -2,10 +2,6 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="AirPerfect.cpp" />
-    <ClCompile Include="Boundary.cpp" />
-    <ClCompile Include="BoundaryDirichlet.cpp" />
-    <ClCompile Include="BoundaryMixed.cpp" />
-    <ClCompile Include="BoundaryNeumann.cpp" />
     <ClCompile Include="Cell.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="Face.cpp" />
@@ -23,14 +19,12 @@
     <ClCompile Include="TimeStepper.cpp" />
     <ClCompile Include="TimeStepperExplicit.cpp" />
     <ClCompile Include="Solution.cpp" />
-    <ClCompile Include="GhostCell.cpp" />
+    <ClCompile Include="ConservativeVariables.cpp" />
+    <ClCompile Include="PrimitiveVariables.cpp" />
+    <ClCompile Include="StructuredBoundary.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AirPerfect.h" />
-    <ClInclude Include="Boundary.h" />
-    <ClInclude Include="BoundaryDirichlet.h" />
-    <ClInclude Include="BoundaryMixed.h" />
-    <ClInclude Include="BoundaryNeumann.h" />
     <ClInclude Include="Cell.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="Face.h" />
@@ -50,7 +44,8 @@
     <ClInclude Include="PrimitiveVariables.h" />
     <ClInclude Include="Jacobian.h" />
     <ClInclude Include="Solution.h" />
-    <ClInclude Include="GhostCell.h" />
+    <ClInclude Include="DeclareConsPrim.h" />
+    <ClInclude Include="StructuredBoundary.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="exampleGrid.txt" />

@@ -62,24 +62,22 @@
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
     <ClCompile Include="AirPerfect.cpp" />
-    <ClCompile Include="Boundary.cpp" />
-    <ClCompile Include="BoundaryDirichlet.cpp" />
-    <ClCompile Include="BoundaryMixed.cpp" />
-    <ClCompile Include="BoundaryNeumann.cpp" />
+    <ClCompile Include="StructuredBoundary.cpp" />
     <ClCompile Include="Cell.cpp" />
     <ClCompile Include="Config.cpp" />
+    <ClCompile Include="ConservativeVariables.cpp" />
     <ClCompile Include="Face.cpp" />
     <ClCompile Include="Fluid.cpp" />
     <ClCompile Include="Flux.cpp" />
     <ClCompile Include="FluxAUSMup.cpp" />
     <ClCompile Include="FluxRoe.cpp" />
-    <ClCompile Include="GhostCell.cpp" />
     <ClCompile Include="Grid.cpp" />
     <ClCompile Include="Limiter.cpp" />
     <ClCompile Include="LimiterMinmod.cpp" />
     <ClCompile Include="LimiterMCvanLeer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PerfectGas.cpp" />
+    <ClCompile Include="PrimitiveVariables.cpp" />
     <ClCompile Include="Solution.cpp" />
     <ClCompile Include="Solver.cpp" />
     <ClCompile Include="TimeStepper.cpp" />
@@ -87,19 +85,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AirPerfect.h" />
-    <ClInclude Include="Boundary.h" />
-    <ClInclude Include="BoundaryDirichlet.h" />
-    <ClInclude Include="BoundaryMixed.h" />
-    <ClInclude Include="BoundaryNeumann.h" />
+    <ClInclude Include="StructuredBoundary.h" />
     <ClInclude Include="Cell.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="ConservativeVariables.h" />
+    <ClInclude Include="DeclareConsPrim.h" />
     <ClInclude Include="Face.h" />
     <ClInclude Include="Fluid.h" />
     <ClInclude Include="Flux.h" />
     <ClInclude Include="FluxAUSMup.h" />
     <ClInclude Include="FluxRoe.h" />
-    <ClInclude Include="GhostCell.h" />
     <ClInclude Include="Grid.h" />
     <ClInclude Include="Jacobian.h" />
     <ClInclude Include="Limiter.h" />

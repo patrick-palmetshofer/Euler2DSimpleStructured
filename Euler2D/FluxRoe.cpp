@@ -39,7 +39,7 @@ FluxRoe::~FluxRoe()
 ConservativeVariables FluxRoe::calcFlux(PrimitiveVariables &prim_left, PrimitiveVariables &prim_right)
 {
 
-	double gamma = fluid->getGamma();
+	double gamma = fluid->getGamma(prim_left);
 
 	double sqrtrho_right = std::sqrt(prim_right.rho);
 	double sqrtrho_left = std::sqrt(prim_left.rho);
@@ -49,12 +49,19 @@ ConservativeVariables FluxRoe::calcFlux(PrimitiveVariables &prim_left, Primitive
 	double u = (sqrtrho_right*prim_right.u + sqrtrho_left*prim_left.u)/(sqrtrho_right + sqrtrho_left);
 	double v = (sqrtrho_right*prim_right.v + sqrtrho_left * prim_left.v) / (sqrtrho_right + sqrtrho_left);
 
-	double Hright = fluid->getEnthalpy(); 
-	double Hleft = fluid->getEnthalpy();
+	double Hright = fluid->getEnthalpy(prim_right); 
+	double Hleft = fluid->getEnthalpy(prim_left);
 
 	double h = (sqrtrho_right*Hright + sqrtrho_left * Hleft) / (sqrtrho_right + sqrtrho_left);
 
-	double c = fluid->getSoundSpeed();
+	//UGLYYY!!!
+	PrimitiveVariables prim_avg;
+	prim_avg.rho = 0.5 * (prim_right.rho + prim_left.rho);
+	prim_avg.u = u;
+	prim_avg.u = v;
+	prim_avg.e = (sqrtrho_right*prim_right.e + sqrtrho_left * prim_left.e) / (sqrtrho_right + sqrtrho_left);
+
+	double c = fluid->getSoundSpeed(prim_avg);
 	//double vel;
 
 	//Calculate Eigenvalues

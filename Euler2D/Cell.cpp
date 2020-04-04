@@ -12,7 +12,6 @@ Cell::Cell(double volume, Face * xi_neg, Face * xi_pos, Face * eta_neg, Face * e
 	fluid = cfg.getFluid();
 }
 
-
 Cell::~Cell()
 {
 }
@@ -24,8 +23,6 @@ void Cell::reconstructStates()
 
 	PrimitiveVariables rsvert = (*down->getPrimitive() - primitive) / (primitive - *up->getPrimitive());
 	PrimitiveVariables yphis = limiter->calcPhis(rsvert);
-
-	
 
 	rightstate = primitive + 0.25*reconstructepsilon*(primitive - *(left->getPrimitive()))*((1 - reconstructkappa)*xphis + (1 + reconstructkappa)*rshoriz / xphis);
 	leftstate = primitive - 0.25*reconstructepsilon*(primitive - *(left->getPrimitive()))*((1 - reconstructkappa)*xphis + (1 + reconstructkappa)*rshoriz / xphis);

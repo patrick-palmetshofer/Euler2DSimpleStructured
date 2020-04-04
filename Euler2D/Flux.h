@@ -1,5 +1,5 @@
 #pragma once
-#include "Cell.h"
+#include "PrimitiveVariables.h"
 
 class Flux
 {

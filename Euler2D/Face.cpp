@@ -22,7 +22,7 @@ void Face::calcPhysFlux()
 	numflux[2] = -(numflux_normal[1] * SxS - numflux_normal[2] * SyS);
 }
 
-Face::Face(double S, double Sx, double Sy, Config *cfg)
+Face::Face(double S, double Sx, double Sy, Config &cfg)
 {
 	this->cfg = cfg;
 	this->S = S;
@@ -32,7 +32,7 @@ Face::Face(double S, double Sx, double Sy, Config *cfg)
 	SxS = Sx / S;
 	SyS = Sy / S;
 
-	fluid = cfg->getFluid();
+	fluid = cfg.getFluid();
 }
 
 void Face::setLeftRight(PrimitiveVariables *leftstate, PrimitiveVariables *rightstate)

@@ -50,20 +50,19 @@ void TimeStepperExplicit::reconstruct()
 	for (auto cell : cells)
 	{
 		cell->reconstructStates();
-
 	}
 	
 }
 double TimeStepperExplicit::maxTimeStep()
 {
+	double dt = 1e19;
 	for (auto face : faces)
 	{
-		double dt = 1e19;
 		double dtlocal = maxCFL / face->getVelNorm();
 		if (dtlocal < dt)
 			dt = dtlocal;
-		return dt;
 	}
+	return dt;
 }
 
 void TimeStepperExplicit::executeTimeStepGlobal()
@@ -73,7 +72,7 @@ void TimeStepperExplicit::executeTimeStepGlobal()
 	
 	for (auto cell : boundaryCells)
 	{
-		cell.applyBC();
+		cell->applyBC();
 	}
 	for (auto face : faces)
 	{

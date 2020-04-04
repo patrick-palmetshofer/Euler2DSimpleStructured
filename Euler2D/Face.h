@@ -1,11 +1,12 @@
 #pragma once
-#include "Cell.h"
 #include "Config.h"
+#include "Flux.h"
+#include "Fluid.h"
 #include <vector>
 class Face
 {
 private:
-	Config *cfg;
+	Config &cfg;
 	Flux *flux;
 	Fluid *fluid;
 
@@ -31,7 +32,7 @@ private:
 	void calcPhysFlux();
 
 public:
-	Face(double S, double Sx, double Sy, Config *cfg);
+	Face(double S, double Sx, double Sy, Config &cfg);
 	void setLeftRight(PrimitiveVariables * leftstate, PrimitiveVariables * rightstate);
 	~Face();
 
