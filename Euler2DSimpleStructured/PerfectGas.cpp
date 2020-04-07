@@ -18,28 +18,28 @@ PerfectGas::~PerfectGas()
 {
 }
 
-double PerfectGas::getSoundSpeed(PrimitiveVariables & prim)
+double PerfectGas::getSoundSpeed(StateVector2D &prim)
 {
 	double T = getTemperature(prim);
 	return std::sqrt(gamma*R*T);
 }
 
-double PerfectGas::getPressure(PrimitiveVariables & prim)
+double PerfectGas::getPressure(StateVector2D &prim)
 {
-	return prim.rho*R*getTemperature(prim);
+	return prim[0]*R*getTemperature(prim);
 }
 
-double PerfectGas::getTemperature(PrimitiveVariables & prim)
+double PerfectGas::getTemperature(StateVector2D &prim)
 {
-	return prim.e/cv;
+	return prim[3]/cv;
 }
 
-double PerfectGas::getEnthalpy(PrimitiveVariables & prim)
+double PerfectGas::getEnthalpy(StateVector2D &prim)
 {
-	return gamma*prim.e;
+	return gamma*prim[3];
 }
 
-double PerfectGas::getGamma(PrimitiveVariables & prim)
+double PerfectGas::getGamma()
 {
 	return gamma;
 }

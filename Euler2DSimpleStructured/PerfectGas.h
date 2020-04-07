@@ -1,8 +1,6 @@
 #pragma once
-#include "Fluid.h"
-#include "Cell.h"
-class PerfectGas :
-	public Fluid
+#include "GlobalTypes.h"
+class PerfectGas
 {
 private:
 	const double Rm = 8.31446261815324;
@@ -15,10 +13,10 @@ public:
 	PerfectGas(double W, double cp);
 	~PerfectGas();
 
-	double getSoundSpeed(PrimitiveVariables &prim);
-	double getPressure(PrimitiveVariables &prim);
-	double getTemperature(PrimitiveVariables &prim);
-	double getEnthalpy(PrimitiveVariables &prim);
-	double getGamma(PrimitiveVariables &prim);
+	double getSoundSpeed(StateVector2D &prim);
+	double getPressure(StateVector2D &prim);
+	double getTemperature(StateVector2D &prim);
+	double getEnthalpy(StateVector2D &prim);
+	double getGamma();
 };
 

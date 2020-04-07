@@ -1,31 +1,31 @@
+#include "Solver.h"
 #include <iostream>
-
-#include "Grid.h"
-#include "TimeStepperExplicit.h"
-#include "Solution.h"
-#include "StructuredBoundary.h"
 
 int main()
 {
-	Grid grid;
-	grid.readGrid("grid.su2");
-	SlipWallStructured lowerwall();
-	SlipWallStructured upperwall();
-	SupersonicInletStructured inlet();
-	SupersonicOutletStructured outlet();
+	Solver s;
+	std::string meshpath = "../../../mesh/";
+	std::string respath = "../../../solution/";
+	std::string gridname = "Grid20deg";
+	std::string infile = meshpath + gridname + ".grd";
+	std::string outfile = respath + gridname + ".res";
 
-	grid.setLeftBoundaryCondition(&inlet);
-	grid.setRightBoundaryCondition(&outlet);
-	grid.setUpBoundaryCondition(&upperwall);
-	grid.setDownBoundaryCondition(&lowerwall);
-
-	TimeStepperExplicit timestepper(grid);
-	Solution solution(grid);
-
-	while (timestepper.getTime() < 10)
+	s.readGridGridPro(infile);
+	s.setConsInlet(1e5, 6e2, 0, 300);
+	s.setInitialCondition();
+	int maxsteps = 100000;
+	for (int i = 0; i<maxsteps;i++)
 	{
-		timestepper.executeTimeStepGlobal();
+		if ((i+1) % 10000 == 0)
+		{
+			outfile = respath + gridname + ".res";
+			outfile = respath + gridname + std::to_string(i) + ".res";
+			s.writeSolution(outfile);
+			std::cout << s.getResidual() << std::endl;
+			if (s.getResidual() < 1e-3)
+				break;
+		}
+		s.executeTimeStepGlobal();
 	}
-
-	solution.write("Result.txt");
+	return 0;
 }
