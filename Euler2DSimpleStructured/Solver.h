@@ -7,7 +7,7 @@ private:
 	int nxi_cells;
 	int neta_cells;
 
-	const double maxCFL = 0.01;
+	const double maxCFL = 0.8;
 
 	double dt;
 	double time;
@@ -15,6 +15,7 @@ private:
 	ValueMatrix2D volumes;
 
 	StateVector2D cons_inlet;
+	StateVector2D cons_initial;
 	//StateMatrix2D primitive;
 
 	double reconstruct_eps;
@@ -41,6 +42,8 @@ private:
 	double cp = 1005;
 
 public:
+	void setSodXInitial();
+	void setSodYInitial();
 	Solver();
 	Solver(std::string filename);
 	~Solver();
@@ -57,9 +60,13 @@ public:
 
 	void setBoundaryUpperLowerWalls();
 
+	void setWalls();
+
 	void setBoundaryOutlet();
 
 	StateVector2D limiterMinmod(StateVector2D &r);
+
+	StateVector2D user2cons(double p, double u, double v, double T);
 
 	StateVector2D calcFlux();
 
@@ -72,6 +79,8 @@ public:
 	StateVector2D calcPhysFluxesXi();
 
 	void setConsInlet(double p, double u, double v, double T);
+
+	void setConsInitial(double p, double u, double v, double T);
 
 	void calcFluxesXi();
 

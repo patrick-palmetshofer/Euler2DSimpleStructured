@@ -2,6 +2,46 @@
 #include <fstream>
 #include <iostream>
 
+void Solver::setSodXInitial()
+{
+	StateVector2D v1 = user2cons(5e5, 0, 0, 300);
+	StateVector2D v2 = user2cons(1e5, 0, 0, 300);
+	for (int i = 0; i < (nxi_cells + 2)/2; i++)
+	{
+		for (int j = 0; j < neta_cells + 2; j++)
+		{
+			conservative[i][j] = v1;
+		}
+	}
+	for (int i = (nxi_cells + 2) / 2; i < nxi_cells + 2; i++)
+	{
+		for (int j = 0; j < neta_cells + 2; j++)
+		{
+			conservative[i][j] = v2;
+		}
+	}
+}
+
+void Solver::setSodYInitial()
+{
+	StateVector2D v1 = user2cons(5e5, 0, 0, 300);
+	StateVector2D v2 = user2cons(1e5, 0, 0, 300);
+	for (int i = 0; i < nxi_cells + 2; i++)
+	{
+		for (int j = 0; j < (neta_cells + 2) / 2; j++)
+		{
+			conservative[i][j] = v1;
+		}
+	}
+	for (int i = 0; i < nxi_cells + 2; i++)
+	{
+		for (int j = (neta_cells + 2) / 2; j < neta_cells + 2; j++)
+		{
+			conservative[i][j] = v2;
+		}
+	}
+}
+
 
 bool checkNaN(StateMatrix2D &m)
 {
@@ -49,6 +89,27 @@ Solver::~Solver()
 {
 }
 
+void Solver::setConsInlet(double p, double u, double v, double T)
+{
+	cons_inlet = user2cons(p, u, v, T);
+}
+
+void Solver::setConsInitial(double p, double u, double v, double T)
+{
+	cons_initial = user2cons(p, u, v, T);
+	setInitialCondition();
+}
+
+void Solver::setInitialCondition()
+{
+	for (int i = 0; i < nxi_cells + 2; i++)
+	{
+		for (int j = 0; j < neta_cells + 2; j++)
+		{
+			conservative[i][j] = cons_initial;
+		}
+	}
+}
 
 void Solver::readGridGridPro(std::string filename)
 {
@@ -96,23 +157,27 @@ void Solver::readGridGridPro(std::string filename)
 	}
 
 	xi_fluxes.resize(nxi_cells + 1);
-	eta_fluxes.resize(nxi_cells + 1);
 	nxi_xs.resize(nxi_cells + 1);
 	nxi_ys.resize(nxi_cells + 1);
-	neta_xs.resize(nxi_cells + 1);
-	neta_ys.resize(nxi_cells + 1);
 	Sxis.resize(nxi_cells + 1);
-	Setas.resize(nxi_cells + 1);
+	
+	eta_fluxes.resize(nxi_cells);
+	neta_xs.resize(nxi_cells);
+	neta_ys.resize(nxi_cells);
+	Setas.resize(nxi_cells);
 
 	for (int i = 0; i < xi_fluxes.size(); i++)
 	{
-		nxi_xs[i].resize(neta_cells + 1);
-		nxi_ys[i].resize(neta_cells + 1);
+		nxi_xs[i].resize(neta_cells);
+		nxi_ys[i].resize(neta_cells);
+		Sxis[i].resize(neta_cells);
+		xi_fluxes[i].resize(neta_cells);
+	}
+	for (int i = 0; i < eta_fluxes.size(); i++)
+	{
 		neta_xs[i].resize(neta_cells + 1);
 		neta_ys[i].resize(neta_cells + 1);
-		Sxis[i].resize(neta_cells + 1);
 		Setas[i].resize(neta_cells + 1);
-		xi_fluxes[i].resize(neta_cells + 1);
 		eta_fluxes[i].resize(neta_cells + 1);
 	}
 
@@ -128,8 +193,8 @@ void Solver::readGridGridPro(std::string filename)
 	{
 		for (int j = 0; j < neta_cells+1; j++)
 		{
-			double Setay = (points[i + 1][j][0] - points[i][j][0]);
 			double Setax = -(points[i + 1][j][1] - points[i][j][1]);
+			double Setay = (points[i + 1][j][0] - points[i][j][0]);
 
 			double Seta = std::sqrt(Setax*Setax + Setay * Setay);
 
@@ -216,25 +281,79 @@ void Solver::setBoundaryInletLeft()
 
 void Solver::setBoundaryUpperLowerWalls()
 {
-	for (int i = 1; i < nxi_cells+1; i++)
+	for (int i = 0; i < nxi_cells; i++)
 	{
-		double unorm = conservative[i][1][1] * neta_xs[i][0] + conservative[i][1][2] * neta_ys[i][0];
+		double unorm = conservative[i+1][1][1] * neta_xs[i][0] + conservative[i + 1][1][2] * neta_ys[i][0];
 		//double upar = conservative[i][1][1] * neta_ys[i][0] + conservative[i][1][2] * neta_xs[i][0];
 		//conservative[i][0][1] = (unorm * neta_xs[i][0] - upar * neta_ys[i][0]) / (neta_xs[i][0] * neta_xs[i][0] - neta_ys[i][0] * neta_ys[i][0]);
 		//conservative[i][0][2] = (-unorm * neta_ys[i][0] - upar * neta_xs[i][0]) / (neta_ys[i][0] * neta_ys[i][0] - neta_xs[i][0] * neta_xs[i][0]);
 
-		conservative[i][0] = conservative[i][1];
-		conservative[i][0][1] = conservative[i][1][1] - 2 * unorm*neta_xs[i][0];
-		conservative[i][0][2] = conservative[i][1][2] - 2 * unorm*neta_ys[i][0];
+		conservative[i + 1][0][0] = conservative[i + 1][1][0];
+		conservative[i + 1][0][1] = conservative[i + 1][1][1] - 2 * unorm*neta_xs[i][0];
+		conservative[i + 1][0][2] = conservative[i + 1][1][2] - 2 * unorm*neta_ys[i][0];
+		conservative[i + 1][0][3] = conservative[i + 1][1][3];
 
-		unorm = conservative[i][neta_cells][1] * neta_xs[i][neta_cells + 1] + conservative[i][neta_cells][2] * neta_ys[i][neta_cells + 1];
+		unorm = conservative[i + 1][neta_cells][1] * neta_xs[i][neta_cells] + conservative[i + 1][neta_cells][2] * neta_ys[i][neta_cells];
 
-		conservative[i][neta_cells + 1] = conservative[i][neta_cells];
-		conservative[i][neta_cells + 1][1] = conservative[i][neta_cells][1] - 2 * unorm*neta_xs[i][neta_cells];
-		conservative[i][neta_cells + 1][2] = conservative[i][neta_cells][2] - 2 * unorm*neta_ys[i][neta_cells];
+		conservative[i + 1][neta_cells + 1][0] = conservative[i + 1][neta_cells][0];
+		conservative[i + 1][neta_cells + 1][1] = conservative[i + 1][neta_cells][1] - 2 * unorm*neta_xs[i][neta_cells];
+		conservative[i + 1][neta_cells + 1][2] = conservative[i + 1][neta_cells][2] - 2 * unorm*neta_ys[i][neta_cells];
+		conservative[i + 1][neta_cells + 1][3] = conservative[i + 1][neta_cells][3];
 		//upar = conservative[i][neta_cells][1] * neta_ys[i][neta_cells + 1] + conservative[i][neta_cells][2] * neta_xs[i][neta_cells + 1];
 
 		
+		//conservative[i][neta_cells + 1][1] = (unorm * neta_xs[i][neta_cells + 1] + upar * neta_ys[i][neta_cells + 1]) / (neta_xs[i][neta_cells + 1] * neta_xs[i][neta_cells + 1] - neta_ys[i][neta_cells + 1] * neta_ys[i][neta_cells + 1]);
+		//conservative[i][neta_cells + 1][2] = (-unorm * neta_ys[i][neta_cells + 1] - upar * neta_xs[i][neta_cells + 1]) / (neta_ys[i][neta_cells + 1] * neta_ys[i][neta_cells + 1] - neta_xs[i][neta_cells + 1] * neta_xs[i][neta_cells + 1]);
+	}
+}
+
+void Solver::setWalls()
+{
+	for (int j = 0; j < neta_cells; j++)
+	{
+		double unorm = conservative[1][j+1][1] * nxi_xs[0][j] + conservative[1][j+1][2] * nxi_ys[0][j];
+		//double upar = conservative[i][1][1] * neta_ys[i][0] + conservative[i][1][2] * neta_xs[i][0];
+		//conservative[i][0][1] = (unorm * neta_xs[i][0] - upar * neta_ys[i][0]) / (neta_xs[i][0] * neta_xs[i][0] - neta_ys[i][0] * neta_ys[i][0]);
+		//conservative[i][0][2] = (-unorm * neta_ys[i][0] - upar * neta_xs[i][0]) / (neta_ys[i][0] * neta_ys[i][0] - neta_xs[i][0] * neta_xs[i][0]);
+
+		conservative[0][j + 1][0] = conservative[1][j + 1][0];
+		conservative[0][j + 1][1] = conservative[1][j + 1][1] - 2 * unorm*nxi_xs[0][j];
+		conservative[0][j + 1][2] = conservative[1][j + 1][2] - 2 * unorm*nxi_ys[0][j];
+		conservative[0][j + 1][3] = conservative[1][j + 1][3];
+
+		unorm = conservative[nxi_cells][j + 1][1] * nxi_xs[nxi_cells][j] + conservative[nxi_cells][j + 1][2] * nxi_ys[nxi_cells][j];
+
+		conservative[nxi_cells + 1][j + 1][0] = conservative[nxi_cells][j + 1][0];
+		conservative[nxi_cells + 1][j + 1][1] = conservative[nxi_cells][j + 1][1] - 2 * unorm*nxi_xs[nxi_cells][j];
+		conservative[nxi_cells + 1][j + 1][2] = conservative[nxi_cells][j + 1][2] - 2 * unorm*nxi_ys[nxi_cells][j];
+		conservative[nxi_cells + 1][j + 1][3] = conservative[nxi_cells][j + 1][3];
+		//upar = conservative[i][neta_cells][1] * neta_ys[i][neta_cells + 1] + conservative[i][neta_cells][2] * neta_xs[i][neta_cells + 1];
+
+
+		//conservative[i][neta_cells + 1][1] = (unorm * neta_xs[i][neta_cells + 1] + upar * neta_ys[i][neta_cells + 1]) / (neta_xs[i][neta_cells + 1] * neta_xs[i][neta_cells + 1] - neta_ys[i][neta_cells + 1] * neta_ys[i][neta_cells + 1]);
+		//conservative[i][neta_cells + 1][2] = (-unorm * neta_ys[i][neta_cells + 1] - upar * neta_xs[i][neta_cells + 1]) / (neta_ys[i][neta_cells + 1] * neta_ys[i][neta_cells + 1] - neta_xs[i][neta_cells + 1] * neta_xs[i][neta_cells + 1]);
+	}
+	for (int i = 0; i < nxi_cells; i++)
+	{
+		double unorm = conservative[i + 1][1][1] * neta_xs[i][0] + conservative[i + 1][1][2] * neta_ys[i][0];
+		//double upar = conservative[i][1][1] * neta_ys[i][0] + conservative[i][1][2] * neta_xs[i][0];
+		//conservative[i][0][1] = (unorm * neta_xs[i][0] - upar * neta_ys[i][0]) / (neta_xs[i][0] * neta_xs[i][0] - neta_ys[i][0] * neta_ys[i][0]);
+		//conservative[i][0][2] = (-unorm * neta_ys[i][0] - upar * neta_xs[i][0]) / (neta_ys[i][0] * neta_ys[i][0] - neta_xs[i][0] * neta_xs[i][0]);
+
+		conservative[i + 1][0][0] = conservative[i + 1][1][0];
+		conservative[i + 1][0][1] = conservative[i + 1][1][1] - 2 * unorm*neta_xs[i][0];
+		conservative[i + 1][0][2] = conservative[i + 1][1][2] - 2 * unorm*neta_ys[i][0];
+		conservative[i + 1][0][3] = conservative[i + 1][1][3];
+
+		unorm = conservative[i + 1][neta_cells][1] * neta_xs[i][neta_cells] + conservative[i + 1][neta_cells][2] * neta_ys[i][neta_cells];
+
+		conservative[i + 1][neta_cells + 1][0] = conservative[i + 1][neta_cells][0];
+		conservative[i + 1][neta_cells + 1][1] = conservative[i + 1][neta_cells][1] - 2 * unorm*neta_xs[i][neta_cells];
+		conservative[i + 1][neta_cells + 1][2] = conservative[i + 1][neta_cells][2] - 2 * unorm*neta_ys[i][neta_cells];
+		conservative[i + 1][neta_cells + 1][3] = conservative[i + 1][neta_cells][3];
+		//upar = conservative[i][neta_cells][1] * neta_ys[i][neta_cells + 1] + conservative[i][neta_cells][2] * neta_xs[i][neta_cells + 1];
+
+
 		//conservative[i][neta_cells + 1][1] = (unorm * neta_xs[i][neta_cells + 1] + upar * neta_ys[i][neta_cells + 1]) / (neta_xs[i][neta_cells + 1] * neta_xs[i][neta_cells + 1] - neta_ys[i][neta_cells + 1] * neta_ys[i][neta_cells + 1]);
 		//conservative[i][neta_cells + 1][2] = (-unorm * neta_ys[i][neta_cells + 1] - upar * neta_xs[i][neta_cells + 1]) / (neta_ys[i][neta_cells + 1] * neta_ys[i][neta_cells + 1] - neta_xs[i][neta_cells + 1] * neta_xs[i][neta_cells + 1]);
 	}
@@ -261,13 +380,14 @@ StateVector2D Solver::limiterMinmod(StateVector2D &rs)
 	return phis;
 }
 
-void Solver::setConsInlet(double p, double u, double v, double T)
+StateVector2D Solver::user2cons(double p, double u, double v, double T)
 {
 	double e = cp / gamma * T;
 	double et = e + 0.5*(u*u + v * v);
 	double rho = p / ((gamma - 1)*e);
 	StateVector2D prim = { rho,u,v,et };
-	cons_inlet = prim2cons(prim);
+	StateVector2D cons = prim2cons(prim);
+	return cons;
 }
 
 void Solver::calcFluxesXi()
@@ -278,7 +398,7 @@ void Solver::calcFluxesXi()
 	StateVector2D c_right_right;
 	StateVector2D flux;
 
-	for (int j = 0; j < neta_cells+1; j++)
+	for (int j = 0; j < neta_cells; j++)
 	{
 		c_left_left = conservative[0][j];
 		c_left = conservative[0][j];
@@ -289,7 +409,7 @@ void Solver::calcFluxesXi()
 		xi_fluxes[0][j] = flux;
 	}
 
-	for (int j = 0; j < neta_cells+1; j++)
+	for (int j = 0; j < neta_cells; j++)
 	{
 		c_left_left = conservative[nxi_cells-1][j];
 		c_left = conservative[nxi_cells][j];
@@ -302,7 +422,7 @@ void Solver::calcFluxesXi()
 
 	for (int i = 1; i < nxi_cells; i++)
 	{
-		for (int j = 0; j < neta_cells+1; j++)
+		for (int j = 0; j < neta_cells; j++)
 		{
 			c_left_left = conservative[i-1][j];
 			c_left = conservative[i][j];
@@ -341,7 +461,7 @@ void Solver::calcFluxesEta()
 	StateVector2D c_right_right;
 	StateVector2D flux;
 
-	for (int i = 0; i < nxi_cells+1; i++)
+	for (int i = 0; i < nxi_cells; i++)
 	{
 		c_left_left = swap(conservative[i][0]);
 		c_left = swap(conservative[i][0]);
@@ -349,10 +469,11 @@ void Solver::calcFluxesEta()
 		c_right_right = swap(conservative[i][2]);
 
 		flux = calcFlux(c_left_left, c_left, c_right, c_right_right, neta_ys[i][0], neta_xs[i][0]);
+		//flux[1] *= -1;
 		eta_fluxes[i][0] = swap(flux);
 	}
 
-	for (int i = 0; i < nxi_cells+1; i++)
+	for (int i = 0; i < nxi_cells; i++)
 	{
 		c_left_left = swap(conservative[i][neta_cells - 1]);
 		c_left = swap(conservative[i][neta_cells]);
@@ -363,7 +484,7 @@ void Solver::calcFluxesEta()
 		eta_fluxes[i][neta_cells] = swap(flux);
 	}
 
-	for (int i = 0; i < nxi_cells+1; i++)
+	for (int i = 0; i < nxi_cells; i++)
 	{
 		for (int j = 1; j < neta_cells; j++)
 		{
@@ -373,7 +494,6 @@ void Solver::calcFluxesEta()
 			c_right_right = swap(conservative[i][j+2]);
 
 			flux = calcFlux(c_left_left, c_left, c_right, c_right_right, neta_ys[i][j], neta_xs[i][j]);
-
 			eta_fluxes[i][j] = swap(flux);
 		}
 	}
@@ -419,6 +539,8 @@ StateVector2D Solver::calcFlux(StateVector2D & c_left_left, StateVector2D & c_le
 	StateVector2D flux_right = calcPhysFlux(reconstruct_right, nx, ny);
 	StateVector2D flux_dissip = calcDissip(reconstruct_left, reconstruct_right, nx, ny);
 
+	if (flux_dissip[1] > 5)
+		checkNaN(flux_dissip);
 	return 0.5*(flux_left + flux_right - flux_dissip);
 }
 
@@ -427,7 +549,7 @@ StateVector2D Solver::calcPhysFlux(StateVector2D & c, double nx, double ny)
 	StateVector2D flux;
 	flux[0] = c[1] * nx + c[2] * ny;
 	flux[1] = c[1] * c[1] / c[0] * nx + c[1] * c[2] / c[0] *ny + (gamma - 1)*(c[3] - 0.5*(c[1] * c[1] + c[2] * c[2]) / c[0])*nx;
-	flux[2] = c[2] * c[1] / c[0] * nx + c[2] * c[2] / c[0] *ny + (gamma - 1)*(c[3] - 0.5*(c[1] * c[1] +c[0] + c[2]) / c[0])*ny;
+	flux[2] = c[2] * c[1] / c[0] * nx + c[2] * c[2] / c[0] *ny + (gamma - 1)*(c[3] - 0.5*(c[1] * c[1] + c[2] * c[2]) / c[0])*ny;
 	flux[3] = (gamma*c[3] - 0.5*(gamma - 1)*(c[1] * c[1] + c[2] * c[2]) / c[0])*(c[1] * nx + c[2] * ny) / c[0];
 	return flux;
 }
@@ -451,13 +573,13 @@ StateVector2D Solver::calcRoeDissip(StateVector2D &prim_left, StateVector2D &pri
 	double u = (sqrtrho_right*prim_right[1] + sqrtrho_left * prim_left[1]) / (sqrtrho_right + sqrtrho_left);
 	double v = (sqrtrho_right*prim_right[2] + sqrtrho_left * prim_left[2]) / (sqrtrho_right + sqrtrho_left);
 
-	double Hright = prim_right[3] + (gamma - 1)*(prim_right[3] - 0.5*(prim_right[1] * prim_right[1] + prim_right[2] * prim_right[2]));
-	double Hleft = prim_left[3] + (gamma - 1)*(prim_left[3] - 0.5*(prim_left[1] * prim_left[1] + prim_left[2] * prim_left[2]));
-
-	double h = (sqrtrho_right*Hright + sqrtrho_left * Hleft) / (sqrtrho_right + sqrtrho_left);
-
 	double pleft = calcPprim(prim_left);
 	double pright = calcPprim(prim_right);
+
+	double Hleft = prim_left[3] + pleft / prim_right[0];
+	double Hright = prim_right[3] + pright / prim_right[0];
+
+	double h = (sqrtrho_right*Hright + sqrtrho_left * Hleft) / (sqrtrho_right + sqrtrho_left);
 	
 	double unorm = u * nx + v * ny;
 	double upar = u * ny + v * nx;
@@ -518,16 +640,6 @@ StateVector2D Solver::calcRoeDissip(StateVector2D &prim_left, StateVector2D &pri
 	return dissip;
 }
 
-void Solver::setInitialCondition()
-{
-	for (int i = 0; i < nxi_cells + 2; i++)
-	{
-		for (int j = 0; j < neta_cells + 2; j++)
-		{
-			conservative[i][j] = cons_inlet;
-		}
-	}
-}
 
 double Solver::getResidual()
 {
@@ -538,11 +650,11 @@ double Solver::getResidual()
 double Solver::calcTimeStep()
 {
 	double dt = 1e19;
-	for (int i = 1; i < nxi_cells - 1; i++)
+	for (int i = 0; i < nxi_cells; i++)
 	{
-		for (int j = 1; j < neta_cells - 1; j++)
+		for (int j = 0; j < neta_cells; j++)
 		{
-			StateVector2D p = cons2prim(conservative[i][j]);
+			StateVector2D p = cons2prim(conservative[i+1][j+1]);
 			double c = std::sqrt(gamma*(gamma - 1)*(p[3] - 0.5*(p[1] * p[1] + p[2] * p[2])));
 
 			double Uxi_velnorm = nxi_xs[i][j] * p[1] + nxi_ys[i][j] * p[2];
@@ -563,9 +675,9 @@ double Solver::calcTimeStep()
 double Solver::calcResidualL2(StateMatrix2D &o, StateMatrix2D &n)
 {
 	double sumres = 0;
-	for (int i = 1; i < nxi_cells - 1; i++)
+	for (int i = 1; i < nxi_cells; i++)
 	{
-		for (int j = 1; j < neta_cells - 1; j++)
+		for (int j = 1; j < neta_cells; j++)
 		{
 			for (int k = 0; k < 1; k++)
 			{
@@ -574,15 +686,18 @@ double Solver::calcResidualL2(StateMatrix2D &o, StateMatrix2D &n)
 			}
 		}
 	}
+	if (sumres < 0)
+		throw;
 	sumres = std::sqrt(sumres);
 	return sumres;
 }
 
 void Solver::executeTimeStepGlobal()
 {
-	setBoundaryInletLeft();
+	/*setBoundaryInletLeft();
 	setBoundaryUpperLowerWalls();
-	setBoundaryOutlet();
+	setBoundaryOutlet();*/
+	setWalls();
 
 	calcFluxesXi();
 	calcFluxesEta();
@@ -595,16 +710,15 @@ void Solver::executeTimeStepGlobal()
 	StateMatrix2D old = conservative;
 
 	StateVector2D Dxi, Deta;
-
-	for (int i = 1; i < nxi_cells+1; i++)
+	for (int i = 0; i < nxi_cells; i++)
 	{
-		for (int j = 1; j < neta_cells+1; j++)
+		for (int j = 0; j < neta_cells; j++)
 		{
-			Dxi = xi_fluxes[i][j] * Sxis[i][j] - xi_fluxes[i - 1][j] * Sxis[i - 1][j];
-			Deta = eta_fluxes[i][j] * Setas[i][j] - eta_fluxes[i][j - 1] * Setas[i][j - 1];
-			conservative[i][j] = conservative[i][j] - dt / volumes[i][j] * (Dxi + Deta);
-			if (std::abs(dt / volumes[i][j]*Dxi[0]) > 0.9*conservative[i][j][0] || std::abs(dt / volumes[i][j]*Deta[0]) > 0.9*conservative[i][j][0])
-				std::cout << "Large Flux at " << i << " , " << "j" << std::endl;
+			Dxi = xi_fluxes[i+1][j] * Sxis[i+1][j] - xi_fluxes[i][j] * Sxis[i][j];
+			Deta = eta_fluxes[i][j+1] * Setas[i][j+1] - eta_fluxes[i][j] * Setas[i][j];
+			conservative[i+1][j+1] = conservative[i+1][j+1] - dt / volumes[i+1][j+1] * (Dxi + Deta);
+			//if (std::abs(dt / volumes[i][j]*Dxi[0]) > 0.9*conservative[i][j][0] || std::abs(dt / volumes[i][j]*Deta[0]) > 0.9*conservative[i][j][0])
+			//	std::cout << "Large Flux at " << i << " , " << j << std::endl;
 			//conservative[i][j] = conservative[i][j] - dt / volumes[i][j] * (xi_fluxes[i][j] * Sxis[i][j] - xi_fluxes[i - 1][j] * Sxis[i - 1][j] + eta_fluxes[i][j] * Setas[i][j] - eta_fluxes[i][j - 1] * Setas[i][j - 1]);
 		}
 	}
@@ -616,9 +730,9 @@ void Solver::executeTimeStepGlobal()
 void Solver::writeSolution(std::string filename)
 {
 	StateMatrix2D p = conservative;
-	for (int i = 1; i < nxi_cells+1; i++)
+	for (int i = 0; i < nxi_cells+2; i++)
 	{
-		for (int j = 1; j < neta_cells+1; j++)
+		for (int j = 0; j < neta_cells+2; j++)
 		{
 			p[i][j] = cons2prim(conservative[i][j]);
 			p[i][j][3] = (p[i][j][3] - 0.5*(p[i][j][2] * p[i][j][2] + p[i][j][1] * p[i][j][1]))*gamma / cp;
@@ -632,9 +746,9 @@ void Solver::writeSolution(std::string filename)
 		stream << nxi_cells << ",\t" << neta_cells << "\n";
 		stream << "rho" << ",\t" << "u" << ",\t" << "v" << ",\t" << "T" << "\n";
 		//Reserve add here
-		for (int i = 1; i < nxi_cells+1; i++)
+		for (int i = 0; i < nxi_cells+2; i++)
 		{
-			for (int j = 1; j < neta_cells+1; j++)
+			for (int j = 0; j < neta_cells+2; j++)
 			{
 				for (int k = 0; k < 3; k++)
 				{
@@ -643,6 +757,7 @@ void Solver::writeSolution(std::string filename)
 				stream << p[i][j][3] << "\n";
 			}
 		}
+		stream.flush();
 		stream.close();
 	}
 	catch (std::ofstream::failure e) {
