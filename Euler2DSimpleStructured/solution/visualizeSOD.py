@@ -7,23 +7,23 @@ from matplotlib.colors import BoundaryNorm
 from matplotlib.ticker import MaxNLocator
 
 gridpath = "../mesh/sodX.grd"
-solpath = "raw/sodX600.res"
+solpath = "raw/sodX150.res"
 
 with open(gridpath) as f:
     first_line = f.readline()
-	
+ 	
 print(first_line)
 
 with open(gridpath) as f:
     first_line = f.readline()
-	
+ 	
 print(first_line)
 
 linevec = first_line.split()
 
 nxi = int(linevec[0])
 neta = int(linevec[1])
-	
+ 	
 
 
 npoints = [int(vn) for vn in first_line.split()]
@@ -45,25 +45,28 @@ fig1.set_figwidth(20)
 for i,ax in enumerate(axes):
     d = data[i][0:-1,1]
     axes[i,0].plot(X[:,0],d)
+  
     
+    
+##   
 # gridpath = "../mesh/sodY.grd"
-# solpath = "raw/sodY2.res"
+# solpath = "raw/sodY90.res"
 
 # with open(gridpath) as f:
 #     first_line = f.readline()
-# 	
+ 	
 # print(first_line)
 
 # with open(gridpath) as f:
 #     first_line = f.readline()
-# 	
+ 	
 # print(first_line)
 
 # linevec = first_line.split()
 
 # nxi = int(linevec[0])
 # neta = int(linevec[1])
-# 	
+ 	
 
 
 # npoints = [int(vn) for vn in first_line.split()]
@@ -83,8 +86,8 @@ for i,ax in enumerate(axes):
 # fig1.set_figheight(15)
 # fig1.set_figwidth(20)
 # for i,ax in enumerate(axes):
-#     d = data[i][1,0:-1]
-#     axes[i,0].plot(Y[0,:],d)
+#     d = data[i][0,1:-1]
+#     axes[i,0].plot(Y[0,0:-1],d)
 
 
 # fig1, axes = plt.subplots(2,2)

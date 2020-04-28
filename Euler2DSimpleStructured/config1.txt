@@ -1,0 +1,17 @@
+grid = Grid30Deg.grd
+
+BC1:
+T = 300
+Ma = 1.6
+u = 1
+v = 0
+
+BC2: slip_wall
+
+
+
+solution =
+
+
+timestep = local
+CFLmax = 0.5

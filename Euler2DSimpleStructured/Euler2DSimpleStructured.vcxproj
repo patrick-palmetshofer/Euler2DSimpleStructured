@@ -74,6 +74,9 @@
     <None Include="mesh\Grid20deg.grd" />
     <None Include="mesh\Grid30deg.grd" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="config1.txt" />
+  </ItemGroup>
   <ItemDefinitionGroup />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
