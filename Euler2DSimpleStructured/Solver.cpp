@@ -55,7 +55,8 @@ bool checkNaN(StateMatrix2D &m)
 				if (!std::isfinite(m[i][j][k]))
 				{
 					ret = true;
-					throw;
+					std::cout << "Calculation aborted due to NaN value at i=" << i << " j=" << j << "\n";
+					//throw;
 				}
 			}
 		}
@@ -70,7 +71,7 @@ bool checkNaN(StateVector2D &m)
 		if (!std::isfinite(m[k]))
 		{
 			ret = true;
-			throw;
+			//throw;
 		}
 	}
 	return ret;
@@ -152,6 +153,8 @@ void Solver::readGridGridPro(std::string filename)
 		std::cerr << "Exception reading file\n";
 	}
 
+
+	//Allocate all matrices
 	xi_fluxes.resize(nxi_cells + 1);
 	nxi_xs.resize(nxi_cells + 1);
 	nxi_ys.resize(nxi_cells + 1);
@@ -189,6 +192,8 @@ void Solver::readGridGridPro(std::string filename)
 		
 	}
 
+
+	//Fill matrices
 	for (int i = 0; i < nxi_cells; i++)
 	{
 		for (int j = 0; j < neta_cells+1; j++)
@@ -330,12 +335,31 @@ StateVector2D Solver::limiterMinmod(StateVector2D &x, StateVector2D &y)
 		double yi = y[i];
 		double phi = 0;
 
-		if (xi*yi > 0)
+		if (xi*yi > 0 && std::isfinite(xi) && std::isfinite(yi))
 		{
 			if (std::abs(xi) < std::abs(yi))
 				phi = xi/yi;
 			else
 				phi = 1;
+		}
+		phis[i] = phi;// *2 / (1 + r);
+	}
+	return phis;
+}
+
+//Safer form of the minmod limiter
+StateVector2D Solver::limitervanAlbada(StateVector2D &x, StateVector2D &y)
+{
+	StateVector2D phis;
+	for (int i = 0; i < x.size(); i++)
+	{
+		double xi = x[i];
+		double yi = y[i];
+		double phi = 0;
+
+		if (xi*yi > 0 && std::isfinite(xi) && std::isfinite(yi))
+		{
+			phi = 2 / (xi / yi + yi / xi);
 		}
 		phis[i] = phi;// *2 / (1 + r);
 	}
@@ -586,13 +610,22 @@ void Solver::setCharacteristicBoundaryRightOutlet()
 		double du = (c[1] / c[0] - cneg[1] / cneg[0]);
 
 		//cpos = c + (c - cneg);
+		double p = calcPcons(c);
 
+		double Ma = u / sound;
 		double L1 = (u - sound)*(dp - rho * sound*du) / dx;
+		if (Ma*Ma < 1)
+		{
+			double K = 0.58*(1 - Ma * Ma)*sound / (points[0][neta_cells][1] - points[0][0][1]);
+
+			
+			L1 = K * (p - p_infty);
+		}
+
 		double L2 = u * (sound*sound*drho - dp) / dx;
 		double L3 = u * (c[2] / c[0] - cneg[2] / cneg[0]) / dx;
 		double L5 = (u + sound)*(dp + rho * sound*du) / dx;
 
-		double p = calcPcons(c);
 		double ppos = p + dx * 0.5*(L5 / (u + sound) + L1 / (u - sound));
 
 		StateVector2D prim = cons2prim(c);
@@ -642,11 +675,14 @@ void Solver::setCharacteristicBoundaryUpperOutlet()
 		double L3 = u * (c[1] / c[0] - cneg[1] / cneg[0]) / dx;
 		double L5 = (u + sound)*(dp + rho * sound*du) / dx;
 
-		double Ma = u/sound;
-		double K = 0.58*(1 - Ma*Ma)*sound / (points[0][neta_cells][1] - points[0][0][1]);
-
 		double p = calcPcons(c);
-		double L1 = K * (p - p_infty);
+		double Ma = u/sound;
+		double L1 = (u - sound)*(dp - rho * sound*du) / dx;
+		if (Ma*Ma < 1)
+		{
+			double K = 0.58*(1 - Ma * Ma)*sound / (points[0][neta_cells][1] - points[0][0][1]);
+			L1 = K * (p - p_infty);
+		}
 		//double L1 = 0;
 
 		double ppos = p + dx * 0.5*(L5 / (u + sound) + L1 / (u - sound));
@@ -718,7 +754,16 @@ void Solver::calcFluxesXi()
 			c_right = conservative[i + 1][j + 1];
 			c_right_right = conservative[i + 2][j + 1];
 
-			flux = calcFluxMUSCL(c_left_left, c_left, c_right, c_right_right, nxi_xs[i][j], nxi_ys[i][j]);
+			double Seta_left_left = Setas[i - 1][j];
+			if (i != 1)
+				Seta_left_left = Setas[i - 2][j];
+
+			double Seta_right_right = Setas[i][j];
+			if (i != nxi_cells-1)
+				Seta_right_right = Setas[i + 1][j];
+
+			flux = calcFluxMUSCL(c_left_left, c_left, c_right, c_right_right, Seta_left_left, Setas[i-1][j], Setas[i][j], Seta_right_right, nxi_xs[i][j], nxi_ys[i][j]);
+			//flux = calcFluxMUSCL(c_left_left, c_left, c_right, c_right_right, nxi_xs[i][j], nxi_ys[i][j]);
 			xi_fluxes[i][j] = flux;
 		}
 	}
@@ -757,6 +802,8 @@ void Solver::calcFluxesEta()
 		c_left = swap(conservative[i + 1][0]);
 		c_right = swap(conservative[i + 1][1]);
 
+		//c_left[2] *= -1;
+		//c_right[2] *= -1;
 		flux = calcFlux(c_left, c_right, neta_ys[i][0], neta_xs[i][0]);
 		//flux[2] *= -1;
 		eta_fluxes[i][0] = swap(flux);
@@ -765,7 +812,9 @@ void Solver::calcFluxesEta()
 		c_left = swap(conservative[i + 1][neta_cells]);
 		c_right = swap(conservative[i + 1][neta_cells + 1]);
 
-		flux = calcFlux(c_left, c_right, neta_ys[i][neta_cells], neta_xs[i][neta_cells]);
+		//c_left[2] *= -1;
+		//c_right[2] *= -1;
+		flux = calcFlux(c_left, c_right, neta_ys[i][neta_cells], -neta_xs[i][neta_cells]);
 		//flux[2] *= -1;
 		eta_fluxes[i][neta_cells] = swap(flux);
 	}
@@ -779,8 +828,21 @@ void Solver::calcFluxesEta()
 			c_right = swap(conservative[i + 1][j+1]);
 			c_right_right = swap(conservative[i + 1][j+2]);
 
-			flux = calcFluxMUSCL(c_left_left, c_left, c_right, c_right_right, neta_ys[i][j], neta_xs[i][j]);
-			//flux[2] *= -1;
+			double Sxi_left_left = Sxis[i][j - 1];
+			if (j != 1)
+				Sxi_left_left = Sxis[i][j - 2];
+
+			double Sxi_right_right = Sxis[i][j];
+			if (j != neta_cells-1)
+				Sxi_right_right = Sxis[i][j + 1];
+
+			//c_left_left[2] *= -1;
+			//c_left[2] *= -1;
+			//c_right[2] *= -1;
+			//c_right_right[2] *= -1;
+			flux = calcFluxMUSCL(c_left_left, c_left, c_right, c_right_right, Sxi_left_left, Sxis[i][j-1], Sxis[i][j], Sxi_right_right, neta_ys[i][j], neta_xs[i][j]);
+			//flux = calcFluxMUSCL(c_left_left, c_left, c_right, c_right_right, neta_ys[i][j], neta_xs[i][j]);
+			//flux[3] *= -1;
 			eta_fluxes[i][j] = swap(flux);
 		}
 	}
@@ -789,8 +851,16 @@ void Solver::calcFluxesEta()
 //Higher-order flux calculation. Reconstructs states and then calls first order flux
 StateVector2D Solver::calcFluxMUSCL(StateVector2D & c_left_left, StateVector2D & c_left, StateVector2D & c_right, StateVector2D & c_right_right, double nx, double ny)
 {
-	StateVector2D slope_left = 0.25*reconstruct_eps*((1 - reconstruct_kappa)*(c_left - c_left_left) + (1 + reconstruct_kappa)*(c_right - c_left));
-	StateVector2D slope_right = 0.25*reconstruct_eps*((1 + reconstruct_kappa)*(c_right - c_left) + (1 - reconstruct_kappa)*(c_right_right - c_right));
+	return calcFluxMUSCL(c_left_left, c_left, c_right, c_right_right, 1.0, 1.0, 1.0, 1.0, nx, ny);
+}
+StateVector2D Solver::calcFluxMUSCL(StateVector2D & c_left_left, StateVector2D & c_left, StateVector2D & c_right, StateVector2D & c_right_right, double Sx_left_left, double Sx_left, double Sx_right, double Sx_right_right, double nx, double ny)
+{
+	StateVector2D leftdiff = (c_left - c_left_left) * 2.0 / (Sx_left_left + Sx_left);
+	StateVector2D diff = (c_right - c_left) * 2.0 / (Sx_left + Sx_right);
+	StateVector2D rightdiff = (c_right_right - c_right) * 2.0 / (Sx_right_right + Sx_right);
+
+	StateVector2D slope_left = 0.25*reconstruct_eps*((1 + reconstruct_kappa)*diff + (1 - reconstruct_kappa)*leftdiff);
+	StateVector2D slope_right = 0.25*reconstruct_eps*((1 + reconstruct_kappa)*diff + (1 - reconstruct_kappa)*rightdiff);
 	if (limit)
 	{
 		//StateVector2D r_left = (c_left - c_left_left) / (c_right - c_left);
@@ -798,14 +868,12 @@ StateVector2D Solver::calcFluxMUSCL(StateVector2D & c_left_left, StateVector2D &
 
 		//slope_left = slope_left * limiter(r_left);
 		//slope_right = slope_right * limiter(r_right);
-		StateVector2D leftdiff = (c_left - c_left_left);
-		StateVector2D diff = (c_right - c_left);
-		StateVector2D rightdiff = (c_right_right - c_right);
+
 		slope_left = slope_left * limiter(leftdiff,diff);
 		slope_right = slope_right * limiter(diff,rightdiff);
 	}
-	StateVector2D reconstruct_left = c_left + slope_left;
-	StateVector2D reconstruct_right = c_right - slope_right;
+	StateVector2D reconstruct_left = c_left + slope_left*Sx_left;
+	StateVector2D reconstruct_right = c_right - slope_right*Sx_right;
 
 	return Solver::calcFlux(reconstruct_left, reconstruct_right, nx, ny);
 }
@@ -909,11 +977,15 @@ StateVector2D Solver::calcRoeDissip(StateVector2D &prim_left, StateVector2D &pri
 	roefactors[2] = -(dp - c * c * drho) / (c*c);
 	roefactors[3] = (dp + rho * c*dunorm) / (2 * c*c);
 
+	//Entropy fix
+	double unorm_L = prim_left[1] * nx + prim_left[2] * ny;
+	double unorm_R = prim_right[1] * nx + prim_right[2] * ny;
+
 	StateVector2D eigenvals;
-	eigenvals[0] = unorm - c;
+	eigenvals[0] = unorm - c;// std::min(unorm - c, unorm_L - c);
 	eigenvals[1] = unorm;
 	eigenvals[2] = unorm;
-	eigenvals[3] = unorm + c;
+	eigenvals[3] = unorm + c; //std::max(unorm + c, unorm_R + c);
 
 	StateVector2D dissip;
 	dissip.fill(0.0);
@@ -922,7 +994,7 @@ StateVector2D Solver::calcRoeDissip(StateVector2D &prim_left, StateVector2D &pri
 		dissip = dissip + roefactors[i] * std::abs(eigenvals[i])*roevectors[i];
 	}
 	//if (std::abs(dissip[0]) > 5)
-	//	checkNaN(dissip);
+	//	checkNaN(dissip)di;
 	return dissip;
 }
 
@@ -940,15 +1012,17 @@ StateVector2D Solver::getResidualsLinfty()
 double Solver::calcTimeStep(int i, int j)
 {
 	StateVector2D p = cons2prim(conservative[i + 1][j + 1]);
-	double c = std::sqrt(gamma*(gamma - 1)*(p[3] - 0.5*(p[1] * p[1] + p[2] * p[2])));
+	double c = calcSoundSpeedcons(conservative[i + 1][j + 1]);// std::sqrt(gamma*(gamma - 1)*(p[3] - 0.5*(p[1] * p[1] + p[2] * p[2])));
 
 	double Uxi_velnorm = nxi_xs[i][j] * p[1] + nxi_ys[i][j] * p[2];
-	double Ueta_velnorm = -1 * neta_xs[i][j] * p[1] + neta_ys[i][j] * p[2];
+	double Ueta_velnorm = neta_xs[i][j] * p[1] + neta_ys[i][j] * p[2];
 
 	double r_xi = std::abs(Uxi_velnorm) + c;
 	double r_eta = std::abs(Ueta_velnorm) + c;
 
-	double dtlocal = std::min((points[i + 1][j][0] - points[i][j][0]) / r_xi, (points[i][j + 1][1] - points[i][j][1]) / r_eta);
+//	double dtlocal = std::min((points[i + 1][j][0] - points[i][j][0]) / r_xi, (points[i][j + 1][1] - points[i][j][1]) / r_eta);
+	double dtlocal = std::min(Sxis[i][j] / r_xi, Setas[i][j]  / r_eta);
+
 	return dtlocal;
 }
 
@@ -1024,6 +1098,7 @@ StateVector2D Solver::calcResidualsL2(StateMatrix2D &o, StateMatrix2D &n)
 double Solver::calcResidualLinfty(StateMatrix2D &o, StateMatrix2D &n)
 {
 	double res = 0;
+	int imax, jmax, kmax;
 	for (int i = 1; i < nxi_cells; i++)
 	{
 		for (int j = 1; j < neta_cells; j++)
@@ -1035,7 +1110,12 @@ double Solver::calcResidualLinfty(StateMatrix2D &o, StateMatrix2D &n)
 					normk = cons_initial[1];
 				double temp = std::abs((n[i][j][k] - o[i][j][k]) / normk);
 				if (temp > res)
+				{
+					imax = i;
+					jmax = j;
+					kmax = k;
 					res = temp;
+				}
 			}
 		}
 	}
@@ -1045,6 +1125,7 @@ double Solver::calcResidualLinfty(StateMatrix2D &o, StateMatrix2D &n)
 StateVector2D Solver::calcResidualsLinfty(StateMatrix2D &o, StateMatrix2D &n)
 {
 	StateVector2D res;
+	int imax, jmax, kmax;
 	for (int k = 0; k < 4; k++)
 	{
 		res[k] = 0;
@@ -1057,7 +1138,12 @@ StateVector2D Solver::calcResidualsLinfty(StateMatrix2D &o, StateMatrix2D &n)
 			{
 				double temp = std::abs((n[i][j][k] - o[i][j][k]) / normk);
 				if (temp > res[k])
+				{
+					imax = i;
+					jmax = j;
+					kmax = k;
 					res[k] = temp;
+				}
 			}
 		}
 	}
@@ -1119,9 +1205,6 @@ void Solver::executeTimeStepLocal()
 	calcFluxesXi();
 	calcFluxesEta();
 
-	//checkNaN(xi_fluxes);
-	//checkNaN(eta_fluxes);
-
 	//Store old values for calculation of residuals
 	StateMatrix2D old = conservative;
 
@@ -1130,16 +1213,24 @@ void Solver::executeTimeStepLocal()
 	{
 		for (int j = 0; j < neta_cells; j++)
 		{
-			dt = maxCFL * calcTimeStep(i,j); //local time step
+			dt = maxCFL * calcTimeStep(i, j); //local time step
 			Dxi = xi_fluxes[i + 1][j] * Sxis[i + 1][j] - xi_fluxes[i][j] * Sxis[i][j];
 			Deta = eta_fluxes[i][j + 1] * Setas[i][j + 1] - eta_fluxes[i][j] * Setas[i][j];
 			conservative[i + 1][j + 1] = conservative[i + 1][j + 1] - dt / volumes[i][j] * (Dxi + Deta);
+
 			//if (std::abs(dt / volumes[i][j]*Dxi[0]) > 0.9*conservative[i][j][0] || std::abs(dt / volumes[i][j]*Deta[0]) > 0.9*conservative[i][j][0])
 			//	std::cout << "Large Flux at " << i << " , " << j << std::endl;
 			//conservative[i][j] = conservative[i][j] - dt / volumes[i][j] * (xi_fluxes[i][j] * Sxis[i][j] - xi_fluxes[i - 1][j] * Sxis[i - 1][j] + eta_fluxes[i][j] * Setas[i][j] - eta_fluxes[i][j - 1] * Setas[i][j - 1]);
 		}
 	}
-	checkNaN(conservative);
+	if (checkNaN(conservative))
+	{
+		//maxCFL *= 0.5;
+		std::cout << "Aborting calculation with CFL number " << maxCFL << "\n";
+		//setInitialCondition();
+		conservative = old;
+	}
+
 	time = 0;
 	residuals_L2 = calcResidualsL2(old, conservative);
 	residuals_Linfty = calcResidualsLinfty(old, conservative);

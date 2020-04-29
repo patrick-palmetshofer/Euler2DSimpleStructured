@@ -102,7 +102,7 @@ using StateMatrix2D = std::vector<std::vector<StateVector2D>>;
 StateVector2D operator* (double scalar, StateVector2D v);
 StateVector2D operator* (StateVector2D v, double scalar);
 StateVector2D operator/ (StateVector2D v1, StateVector2D v2);
-StateVector2D operator/ (double scalar, StateVector2D v);
+StateVector2D operator/ ( StateVector2D v, double scalar);
 StateVector2D operator+ (StateVector2D v1, StateVector2D v2);
 StateVector2D operator* (StateVector2D v1, StateVector2D v2);
 StateVector2D operator- (StateVector2D v1, StateVector2D v2);

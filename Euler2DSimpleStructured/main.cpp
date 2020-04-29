@@ -4,7 +4,7 @@
 #include <fstream>
 
 const double eps = 1;
-const double kappa = 1.0/3.0;// 1.0 / 3.0;
+const double kappa = 1.0/3.0;// 1.0 / 2.0;// 1.0 / 2.0;// 1.0 / 3.0;// 1.0 / 3.0;// 1.0 / 3.0;
 const bool limit = true;
 
 const double convcrit = 1e-10;
@@ -59,7 +59,7 @@ void executeSolver(double vel, int angle, double eps, double kappa, bool limit, 
 	s.setConsInlet(1.01325e5, vel, 0, 300);
 	s.setConsInitial(1.01325e5, vel, 0, 300);
 
-	int maxsteps = 10000;
+	int maxsteps = 20000;
 	std::vector<StateVector2D> residuals(maxsteps+1);
 	std::vector<StateVector2D> residualsinf(maxsteps + 1);
 
@@ -91,22 +91,22 @@ void executeSolver(double vel, int angle, double eps, double kappa, bool limit, 
 int main()
 {
 	// 555.50,867.97,1041.566
-	std::vector<double> vels = { 1041.566, 867.97, 555.50 };
-	std::vector<int> angles = { 10,20,30 };
+	std::vector<double> vels = { 555.50, 867.97, 1041.566 };
+	std::vector<int> angles = { 30, 20, 10 };
 
 	for (auto vel : vels)
 	{
 		for (auto angle : angles)
 		{
 			std::clock_t c_start = std::clock();
-			executeSolver(vel, angle,eps,kappa,limit,convcrit);
+			executeSolver(vel, angle, eps, kappa, limit, convcrit);
 			std::clock_t c_end = std::clock();
 			double cpu_time = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
 			std::cout << "Run complete after " << cpu_time << "ms on CPU for v=" << std::to_string(vel) << " and alpha=" << std::to_string(angle) << "\n";
 		}
 	}
 
-	return 0;
+hoc	return 0;
 }
 
 

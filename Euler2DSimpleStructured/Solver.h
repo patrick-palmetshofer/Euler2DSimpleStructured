@@ -12,7 +12,7 @@ private:
 	bool limit;
 
 	//Maximum CFL number, use 0.5 for sure stability
-	const double maxCFL = 0.5;
+	double maxCFL = 0.1;
 	double p_infty;
 
 	//2D Vector of points. 
@@ -93,6 +93,7 @@ public:
 	//Sets of limiter function called by previous function
 	StateVector2D limiterMinmod(StateVector2D &r);
 	StateVector2D limiterMinmod(StateVector2D & x, StateVector2D & y);
+	StateVector2D limitervanAlbada(StateVector2D & x, StateVector2D & y);
 	StateVector2D limiterMC(StateVector2D & rs);
 
 	//Treatment of Boundary conditions. Hard coded :(
@@ -120,6 +121,7 @@ public:
 
 	//Flux calculation
 	StateVector2D calcFluxMUSCL(StateVector2D & c_left_left, StateVector2D & c_left, StateVector2D & c_right, StateVector2D & c_right_right, double nx, double ny);
+	StateVector2D calcFluxMUSCL(StateVector2D & c_left_left, StateVector2D & c_left, StateVector2D & c_right, StateVector2D & c_right_right, double Sx_left_left, double Sx_left, double Sx_right, double Sx_right_right, double nx, double ny);
 	StateVector2D calcFlux(StateVector2D & c_left, StateVector2D & c_right, double nx, double ny);
 
 	//Previous method calls:

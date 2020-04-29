@@ -16,7 +16,7 @@ StateVector2D operator* (StateVector2D v, double scalar)
 	return res;
 }
 
-StateVector2D operator/ (double scalar, StateVector2D v)
+StateVector2D operator/ (StateVector2D v, double scalar)
 {
 	StateVector2D res;
 	for (int i = 0; i < 2 + 2; i++)
