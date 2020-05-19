@@ -1,113 +1,69 @@
 #include "Solver.h"
+#include "Config.h"
 #include <ctime>
 #include <iostream>
 #include <fstream>
+#include <string>
+#include <memory>
 
-const double eps = 1;
-const double kappa = 1.0/3.0;// 1.0 / 2.0;// 1.0 / 2.0;// 1.0 / 3.0;// 1.0 / 3.0;// 1.0 / 3.0;
-const bool limit = true;
+#include <Eigen/Dense>
 
-const double convcrit = 1e-10;
-
-
-void writeResidual(std::vector<StateVector2D> &residuals, std::string &filename)
+int main(int argc, char* argv[])
 {
-	std::ofstream stream;
-	try
-	{
-		stream.open(filename, std::ofstream::out);
-		stream << "rho" << ",\t" << "rhou" << ",\t" << "rhov" << ",\t" << "rhoet" << "\n";
-		//Reserve add here
-		for (int i = 0; i < residuals.size(); i++)
-		{
-			for (int k = 0; k < 3; k++)
-			{
-				stream << residuals[i][k] << ",\t";
-			}
-			stream << residuals[i][3] << "\n";
-		}
-		stream.flush();
-		stream.close();
-	}
-	catch (std::ofstream::failure e) {
-		std::cerr << "Exception writing file\n";
-	}
+	Config config;
+	std::unique_ptr<Solver> solver;
+
+	std::string configfile = "config.cfg";
+	//if (argc)
+	//{
+	//	configfile = argv[0];
+	//}
+
+	config.readConfig(configfile);
+
+	solver = config.getSolver();
+
+	solver->solve();
+
+	return 0;
 }
 
-void executeSolver(double vel, int angle, double eps, double kappa, bool limit, double convcrit)
-{
-	std::string meshpath = "../../../mesh/";
-	std::string respath = "../../../solution/";
-
-	if (limit)
-		respath += "withlimiter/";
-	else
-		respath += "nolimiter/";
-
-	std::string gridname = "Grid" + std::to_string(angle) + "deg";
-	std::string velstr = std::to_string(vel);
-	std::string infile = meshpath + gridname + ".grd";
-	std::string outfile = respath + gridname + velstr + ".res";
-	std::string residualfile = respath + gridname + velstr + "_residualsL2.csv";
-	std::string residualinffile = respath + gridname + velstr + "_residualsLinf.csv";
-
-	Solver s(infile,eps,kappa);
-
-	if (!limit)
-		s.disableLimiter();
-
-	s.setConsInlet(1.01325e5, vel, 0, 300);
-	s.setConsInitial(1.01325e5, vel, 0, 300);
-
-	int maxsteps = 20000;
-	std::vector<StateVector2D> residuals(maxsteps+1);
-	std::vector<StateVector2D> residualsinf(maxsteps + 1);
-
-	int i = 0;
-	for (i = 0; i <= maxsteps; i++)
-	{
-		s.executeTimeStepLocal();
-		residuals[i] = s.getResidualsL2();
-		residualsinf[i] = s.getResidualsLinfty();
-		if (residuals[i][0] < convcrit)
-			break;
-		if (i % 1000 == 0)
-		{
-			std::cout << residuals[i][0] << "\t" << residuals[i][1] << "\t" << residuals[i][2] << "\t" << residuals[i][3] << "\n";
-			//if (s.getResidual() < 1e-9)
-			//	break;
-		}
-	}
 
 
-	s.writeSolution(outfile);
-	residuals.resize(i+1);
-	residualsinf.resize(i + 1);
 
-	writeResidual(residuals, residualfile);
-	writeResidual(residualsinf, residualinffile);
-}
 
-int main()
-{
-	// 555.50,867.97,1041.566
-	std::vector<double> vels = { 555.50, 867.97, 1041.566 };
-	std::vector<int> angles = { 30, 20, 10 };
 
-	for (auto vel : vels)
-	{
-		for (auto angle : angles)
-		{
-			std::clock_t c_start = std::clock();
-			executeSolver(vel, angle, eps, kappa, limit, convcrit);
-			std::clock_t c_end = std::clock();
-			double cpu_time = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
-			std::cout << "Run complete after " << cpu_time << "ms on CPU for v=" << std::to_string(vel) << " and alpha=" << std::to_string(angle) << "\n";
-		}
-	}
 
-hoc	return 0;
-}
+
+
+
+
+//const double eps = 1;
+//const double kappa = 1.0/3.0;// 1.0 / 2.0;// 1.0 / 2.0;// 1.0 / 3.0;// 1.0 / 3.0;// 1.0 / 3.0;
+//const bool limit = true;
+//
+//const double convcrit = 1e-10;
+
+//int main()
+//{
+//	// 555.50,867.97,1041.566
+//	std::vector<double> vels = { 555.50, 867.97, 1041.566 };
+//	std::vector<int> angles = { 30, 20, 10 };
+//
+//	for (auto vel : vels)
+//	{
+//		for (auto angle : angles)
+//		{
+//			std::clock_t c_start = std::clock();
+//			executeSolver(vel, angle, eps, kappa, limit, convcrit);
+//			std::clock_t c_end = std::clock();
+//			double cpu_time = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
+//			std::cout << "Run complete after " << cpu_time << "ms on CPU for v=" << std::to_string(vel) << " and alpha=" << std::to_string(angle) << "\n";
+//		}
+//	}
+//
+//	return 0;
+//}
 
 
 

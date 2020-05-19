@@ -1,100 +1,54 @@
 #pragma once
 #include "GlobalTypes.h"
+#include "Grid.h"
+#include "TimeStepper.h"
+#include "Fluid.h"
+#include "Solution.h"
+#include "Boundary.h"
+
+#include <memory>
 
 class Solver
 {
 private:
-	//Numbers of cells in both computational directions, excluding ghost cells
-	int nxi_cells;
-	int neta_cells;
+	std::unique_ptr<Grid> grid;
+	std::unique_ptr<TimeStepper> stepper;
+	std::unique_ptr<Reconstruct> reconstruct;
+	std::unique_ptr<Fluid> fluid;
+	std::unique_ptr<Solution> solution;
+	std::unique_ptr<Flux> xi_fluxes;
+	std::unique_ptr<Flux> eta_fluxes;
+	std::vector<std::unique_ptr<Boundary>> boundaries;
+
+	double time_write_interval;
+	int iter_write_interval;
 
 	//Use limiter?
 	bool limit;
+
+	double implicit;
 
 	//Maximum CFL number, use 0.5 for sure stability
 	double maxCFL = 0.1;
 	double p_infty;
 
-	//2D Vector of points. 
-	std::vector<std::vector<std::array<double, 2>>> points;
-
 	//Time step and current time in simulation
 	double dt;
 	double time;
 
-	//Volumes of cells in domain
-	ValueMatrix2D volumes;
+	double maxTime;
+	double maxIter;
 
 	//conservative variables for Inlet and initial condition
 	StateVector2D cons_inlet;
 	StateVector2D cons_initial;
 	//StateMatrix2D primitive;
 
-	//MUSCL parameters
-	double reconstruct_eps;
-	double reconstruct_kappa;
-
-	//Total residual. Can be calculated through L2 or Linfty. See corresponding methods
-	StateVector2D residuals_L2;
-	StateVector2D residuals_Linfty;
-
-	//Face areas in both computational directions
-	ValueMatrix2D Sxis;
-	ValueMatrix2D Setas;
-
-	//Face normal vector components for each computational direction (2 physical directions each)
-	ValueMatrix2D nxi_xs;
-	ValueMatrix2D nxi_ys;
-	ValueMatrix2D neta_xs;
-	ValueMatrix2D neta_ys;
-
 	//StateMatrix2D xi_face_prim;
 	//StateMatrix2D eta_face_prim;
 
-	//Fluxes at Faces and Conservative variables of all cells
-	StateMatrix2D xi_fluxes;
-	StateMatrix2D eta_fluxes;
 	StateMatrix2D conservative;
-
-	//Perfect gas constants
-	double gamma = 1.4;
-	double cp = 1005;
-
-public:
-	//Utilities for Sod problem tests
-	void setSodXInitial();
-	void setSodYInitial();
-
-	//Constructors/destructors
-	Solver();
-	Solver(double eps, double kappa);
-	Solver(std::string filename, double eps, double kappa);
-	Solver(std::string filename);
-	~Solver();
-
-	//Reads GridPro grid file (Warning, no treatment of Gridpro Boundary Conditions)
-	void readGridGridPro(std::string filename);
-
-	//Utilities for conversion between variable types
-	StateVector2D prim2cons(StateVector2D &p);
-	StateVector2D cons2prim(StateVector2D &c);
-	StateVector2D user2cons(double p, double u, double v, double T);
-	double calcPcons(StateVector2D & c);
-	double calcMacons(StateVector2D & c);
-	double calcSoundSpeedcons(StateVector2D & c);
-	double calcPprim(StateVector2D & prim);
-
-	//Limiter function using the ratio. Can lead to problems with 0/0 inputs
-	StateVector2D limiter(StateVector2D &r);
-
-	//Limiter function using explicit values. Returns Limiter function in terms of r
-	StateVector2D limiter(StateVector2D & x, StateVector2D & y);
-
-	//Sets of limiter function called by previous function
-	StateVector2D limiterMinmod(StateVector2D &r);
-	StateVector2D limiterMinmod(StateVector2D & x, StateVector2D & y);
-	StateVector2D limitervanAlbada(StateVector2D & x, StateVector2D & y);
-	StateVector2D limiterMC(StateVector2D & rs);
+	StateMatrix2D old_conservative;
 
 	//Treatment of Boundary conditions. Hard coded :(
 	//First-order (constant boundary) conditions
@@ -108,6 +62,33 @@ public:
 	void setCharacteristicBoundaryRightOutlet();
 	void setCharacteristicBoundaryUpperOutlet();
 
+public:
+
+	void setImplicit(double imp) { implicit = imp; };
+	void setMaxTime(double t) { maxTime = t; };
+	void setMaxIter(double iter) { maxIter = iter; };
+	void setCFL(double c) { maxCFL = c; };
+
+	template <typename T> T * set(std::unique_ptr<T>& source, std::unique_ptr<T>& target) { target = std::move(source); return target.get(); };
+
+	TimeStepper * setTimeStepper(std::unique_ptr<TimeStepper>& new_stepper) { return set(new_stepper, stepper); };
+	Reconstruct * setReconstruct(std::unique_ptr<Reconstruct>& new_reconstruct) { return set(new_reconstruct, reconstruct); };
+	Grid * setGrid(std::unique_ptr<Grid>& new_grid) { return set(new_grid, grid); };
+	Fluid * setFluid(std::unique_ptr<Fluid>& new_fluid) { return set(new_fluid, fluid); };
+	Solution * setSolution(std::unique_ptr<Solution>& new_solution) { return set(new_solution, solution); };
+	Flux * setXiFluxes(std::unique_ptr<Flux>& new_xi_fluxes) { return set(new_xi_fluxes, xi_fluxes); };
+	Flux * setEtaFluxes(std::unique_ptr<Flux>& new_eta_fluxes) { return set(new_eta_fluxes, eta_fluxes); };
+	std::vector<std::unique_ptr<Boundary>> * setBoundaries(std::vector<std::unique_ptr<Boundary>>& new_boundaries);
+
+	void crossPopulatePointers();
+
+	void setTimeWriteInterval(double t) { time_write_interval = t; };
+	void setIterWriteInterval(int i) { iter_write_interval = i; };
+
+	//Utilities for Sod problem tests
+	void setSodXInitial();
+	void setSodYInitial();
+
 	//Set initial and boundary condition values for initialization
 	void setConsInlet(double p, double u, double v, double T);
 	void setConsInitial(double p, double u, double v, double T);
@@ -115,55 +96,18 @@ public:
 	//Fill all cells with initial condition
 	void setInitialCondition();
 
-	//Calculate fluxes of all faces.
-	void calcFluxesXi(); //Xi=const faces
-	void calcFluxesEta(); //Eta=const faces
-
-	//Flux calculation
-	StateVector2D calcFluxMUSCL(StateVector2D & c_left_left, StateVector2D & c_left, StateVector2D & c_right, StateVector2D & c_right_right, double nx, double ny);
-	StateVector2D calcFluxMUSCL(StateVector2D & c_left_left, StateVector2D & c_left, StateVector2D & c_right, StateVector2D & c_right_right, double Sx_left_left, double Sx_left, double Sx_right, double Sx_right_right, double nx, double ny);
-	StateVector2D calcFlux(StateVector2D & c_left, StateVector2D & c_right, double nx, double ny);
-
-	//Previous method calls:
-	//Calculate physical fluxes without numerical dissipation
-	StateVector2D calcPhysFlux(StateVector2D & c, double nx, double ny);
-	//Calculate numerical dissipation
-	StateVector2D calcDissip(StateVector2D & prim_left, StateVector2D & prim_right, double nx, double ny);
-	//Options for numerical dissipation calculation: Roe flux (no entropy correction)
-	StateVector2D calcRoeDissip(StateVector2D & prim_left, StateVector2D & prim_right, double nx, double ny);
-
-
-
-
-
-	//Calculate time step for global time stepping
-	double calcTimeStep();
-	//Method calls:
-	//Calculate timestep for local timestepping
-	double calcTimeStep(int i, int j);
-
-	//Calculate residuals, total, not per equation in terms of old conservatives and new conservatives
-	double calcResidualL2(StateMatrix2D & o, StateMatrix2D & n);
-	double calcResidualLinfty(StateMatrix2D & o, StateMatrix2D & n);
-
-	//Calculate residuals per value
-	StateVector2D calcResidualsL2(StateMatrix2D & o, StateMatrix2D & n);
-	StateVector2D calcResidualsLinfty(StateMatrix2D & o, StateMatrix2D & n);
-
-	//Actual time stepping routines. To be called on each iteration.
-	//Calls BCs, timestep calculator, Flux calculators and performs time integration. 
-	//Saves residual
-	void executeTimeStepGlobal();
-	void executeTimeStepLocal();
+	//Constructors/destructors
+	Solver();
+	Solver(double eps, double kappa);
+	Solver(std::string filename, double eps, double kappa);
+	Solver(std::string filename);
+	void initSizeFromGrid();
+	~Solver();
 
 	//Get current time for global time stepping. Returns 0 for local time steps
 	double getTime();
 
-	StateVector2D getResidualsL2();
-	StateVector2D getResidualsLinfty();
-
-	//Write solution to file. Same format as input grid
-	void writeSolution(std::string filename);
+	void allocateConservative();
 
 	//limiter control
 	void enableLimiter() {
@@ -171,19 +115,21 @@ public:
 	};
 	void disableLimiter() {
 		limit = false;
-	};;
+	};
+
+	void solve();
 
 	// Deprecated prototypes
 	//StateVector2D calcFlux();
 	//StateVector2D spaceDisc(int i, int j);
-	//StateVector2D spaceDisc(StateVector2D & c, double nx, double ny);
-	//StateVector2D calcFlux(StateVector2D & c, double nx, double ny);
+	//StateVector2D spaceDisc(const StateVector2D & c, double nx, double ny);
+	//StateVector2D calcFlux(const StateVector2D & c, double nx, double ny);
 	//StateVector2D calcPhysFluxesXi();
 	//StateVector2D mainloop();
 	//StateVector2D calcDissip();
-	//void physicalFluxRight(StateVector2D &c);
-	//void physicalFluxUp(StateVector2D &c);
+	//void physicalFluxRight(const StateVector2D &c);
+	//void physicalFluxUp(const StateVector2D &c);
 	//void RoeDissipRight(int i, int j);
-	//StateVector2D calcPhysFlux(StateVector2D & prim_left, StateVector2D & prim_right, double nx, double ny);
+	//StateVector2D calcPhysFlux(const StateVector2D & prim_left, const StateVector2D & prim_right, double nx, double ny);
 };
 
