@@ -13,7 +13,6 @@ Reconstruct::~Reconstruct()
 
 std::pair<StateVector2D, StateVector2D> Reconstruct::reconstructStates(const StateVector2D& c_left, const StateVector2D& c_right)
 {
-
 	return std::make_pair(c_left, c_right);
 }
 
@@ -31,7 +30,7 @@ std::pair<StateVector2D, StateVector2D> Reconstruct::reconstructStates(int i, in
 	}
 	else
 		throw;
-	return reconstructStates(conservative->at(ineg).at(jneg), conservative->at(i).at(j));
+	return reconstructStates((*conservative)[ineg][jneg], (*conservative)[i][j]);
 }
 
 std::pair<StateVector2D, StateVector2D> Reconstruct::reconstructStatesXi(int i, int j)

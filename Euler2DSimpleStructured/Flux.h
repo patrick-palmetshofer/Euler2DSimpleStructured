@@ -2,7 +2,6 @@
 #include "GlobalTypes.h"
 #include "Fluid.h"
 #include "Reconstruct.h"
-#include "Boundary.h"
 
 class Flux
 {
@@ -21,7 +20,7 @@ protected:
 	template<typename T>
 	T swap(T &data)
 	{
-		return Euler::swap(data, dim);
+		return Euler::swap(data, dim+1);
 	}
 
 	//std::pair<StateVector2D, StateVector2D> reconstruct(int i, int j);
@@ -34,6 +33,7 @@ public:
 	void setReconstruct(Reconstruct * new_reconstruct) { reconstruct = new_reconstruct; };
 	void setGrid(Grid * new_grid) { grid = new_grid; };
 	void setConservative(StateMatrix2D * cons);
+	void setBoundaryFlux(int i, int j, StateVector2D flux) { fluxes[i][j] = flux; };
 
 	StateMatrix2D * get() { return &fluxes; };
 
@@ -41,6 +41,9 @@ public:
 	//Xi=const faces
 
 	void calcFluxes();
+
+
+	int getDim() { return dim; };
 
 	StateVector2D calcFlux(std::pair<StateVector2D, StateVector2D> leftrightstates, double nx, double ny);
 

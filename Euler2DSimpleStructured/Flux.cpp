@@ -22,11 +22,7 @@ void Flux::setConservative(StateMatrix2D * cons)
 		ydim = 0;
 	}
 
-	fluxes.resize(grid->getnComponentCells(xdim) + ydim);
-	for (int i = 0; i < fluxes.size(); i++)
-	{
-		fluxes[i].resize(grid->getnComponentCells(ydim) + xdim);
-	}
+	fluxes.resize(grid->getnComponentCells(0) + ydim,std::vector<StateVector2D>(grid->getnComponentCells(1) + xdim));
 }
 
 void Flux::calcFluxes()
@@ -38,9 +34,10 @@ void Flux::calcFluxes()
 		xdim = 1;
 		ydim = 0;
 	}
-	for (int i = 0; i < grid->getnxiCells()+xdim; i++)
+
+	for (int i = ydim; i < grid->getnxiCells(); i++)
 	{
-		for (int j = 0; j < grid->getnetaCells()+ydim; j++)
+		for (int j = xdim; j < grid->getnetaCells(); j++)
 		{
 			std::pair<StateVector2D, StateVector2D> leftrightstates = reconstruct->reconstructStates(i, j, dim);
 			double nx = grid->getnComponent(i, j, xdim, xdim);
@@ -49,7 +46,7 @@ void Flux::calcFluxes()
 			std::pair<StateVector2D, StateVector2D> swapped = { swap(leftrightstates.first), swap(leftrightstates.second) };
 			StateVector2D flux = calcFlux(swapped,nx,ny);
 
-			fluxes.at(i).at(j) = swap(flux);
+			fluxes[i][j] = swap(flux);
 		}
 	}
 }

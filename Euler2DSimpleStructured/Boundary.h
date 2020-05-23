@@ -2,6 +2,7 @@
 #include "GlobalTypes.h"
 #include "Grid.h"
 #include "Fluid.h"
+#include "Flux.h"
 
 class Boundary
 {
@@ -9,6 +10,7 @@ protected:
 	Grid *grid;
 	Fluid *fluid;
 	StateMatrix2D * conservative;
+	Flux * flux;
 
 	int dim;
 	int dir;
@@ -21,7 +23,6 @@ protected:
 	{
 		return Euler::swap(data, dim);
 	}
-
 public:
 	Boundary();
 	virtual ~Boundary();
@@ -35,8 +36,15 @@ public:
 
 	void setGrid(Grid * new_grid) { grid = new_grid; };
 	void setFluid(Fluid * newfluid) { fluid = newfluid; };
+	void setFlux(Flux * newflux) { flux = newflux; };
+	void setConservative(StateMatrix2D * cons) { conservative = cons; };
+
+	int getDim() { return dim; };
+	int getDir() { return dir; };
 
 	virtual StateVector2D getGhostState(std::array<int,2> ind) = 0;
+
+	void apply();
 };
 
 class BoundaryLODI :

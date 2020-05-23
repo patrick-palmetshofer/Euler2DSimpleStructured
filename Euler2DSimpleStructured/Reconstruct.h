@@ -1,14 +1,12 @@
 #pragma once
 #include "Grid.h"
 #include "GlobalTypes.h"
-#include "Boundary.h"
 
 class Reconstruct
 {
 protected:
 	StateVector2D reconstruct_left, reconstruct_right;
 	Grid * grid;
-	std::vector<std::unique_ptr<Boundary>> * boundaries;
 
 	StateMatrix2D * conservative;
 public:

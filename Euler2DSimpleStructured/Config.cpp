@@ -203,6 +203,8 @@ void assignBoundary(T sref, Boundary * b)
 		b->setRight();
 	else if (val == "left")
 		b->setLeft();
+	else
+		throw;
 }
 
 void Config::boundaryRead(const std::vector<std::string>& strings)

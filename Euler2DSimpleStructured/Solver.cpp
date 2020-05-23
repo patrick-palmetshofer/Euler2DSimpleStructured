@@ -32,12 +32,7 @@ Solver::Solver(std::string filename) : Solver()
 
 void Solver::initSizeFromGrid()
 {
-	conservative.resize(grid->getnxiCells());
-	for (int i = 0; i < conservative.size(); i++)
-	{
-		conservative[i].resize(grid->getnetaCells());
-
-	}
+	conservative.resize(grid->getnxiCells(), std::vector<StateVector2D>(grid->getnetaCells()));
 }
 
 //Destructor. As everything is implemented using STL containers, data deallocation is handled by STL
@@ -189,9 +184,7 @@ double Solver::getTime()
 
 void Solver::allocateConservative()
 {
-	conservative.resize(grid->getnxiCells());
-	for (auto &c : conservative)
-		c.resize(grid->getnetaCells());
+	conservative.resize(grid->getnxiCells(), std::vector<StateVector2D>(grid->getnetaCells()));
 }
 
 //void Solver::solve(double vel, int angle, double eps, double kappa, bool limit, double convcrit)
@@ -266,32 +259,47 @@ void Solver::solve()
 		throw;
 
 	allocateConservative();
+	setInitialCondition();
 
 	for (auto &b : boundaries)
+	{
+		if (b->getDim() == xi_fluxes->getDim())
+			b->setFlux(xi_fluxes.get());
+		else if (b->getDim() == eta_fluxes->getDim())
+			b->setFlux(eta_fluxes.get());
+		else
+			throw;
+		b->setConservative(&conservative);
+		b->setFluid(fluid.get());
 		b->init();
+	}
 	reconstruct->setConservative(&conservative);
+	reconstruct->setGrid(grid.get());
 	xi_fluxes->setConservative(&conservative);
 	eta_fluxes->setConservative(&conservative);
 	for (int i = 0; i <= maxIter; i++)
 	{
 		//StateVector2D calcFluxMUSCL(const StateVector2D & c_left_left, const StateVector2D & c_left, const StateVector2D & c_right, const StateVector2D & c_right_right, double nx, double ny);
 		//StateVector2D calcFluxMUSCL(const StateVector2D & c_left_left, const StateVector2D & c_left, const StateVector2D & c_right, const StateVector2D & c_right_right, double Sx_left_left, double Sx_left, double Sx_right, double Sx_right_right, double nx, double ny);
-		//for (auto &b : boundaries)
-		//	b->apply();
+		for (auto &b : boundaries)
+			b->apply();
 
 		//Calculate fluxes
 		xi_fluxes->calcFluxes();
 		eta_fluxes->calcFluxes();
 
+		//Euler::checkNaN(xi_fluxes->get());
+		//Euler::checkNaN(eta_fluxes->get());
+
 		old_conservative = conservative;
 
-		stepper->execute(&conservative, xi_fluxes->get(), xi_fluxes->get());
+		stepper->execute(&conservative, xi_fluxes->get(), eta_fluxes->get());
 
 		solution->calcResidualsL2(old_conservative,conservative);
 		solution->calcResidualsLinfty(old_conservative,conservative);
 
-		if (i % iter_write_interval == 0)
-			solution->writeSolution("sol.sol", conservative);
+		if (i % iter_write_interval == 0 || Euler::checkNaN(&conservative))
+			solution->writeSolution("sol"+std::to_string(i)+".sol", conservative);
 	}
 }
 

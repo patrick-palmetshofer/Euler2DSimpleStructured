@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Scripts">
+      <UniqueIdentifier>{3901d9cd-8065-4368-8089-54f7ae14fcc4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="config.cfg">
@@ -29,6 +32,12 @@
     </None>
     <None Include="mesh\Grid30deg.grd">
       <Filter>Resource Files</Filter>
+    </None>
+    <None Include="solutionDisplay.py">
+      <Filter>Scripts</Filter>
+    </None>
+    <None Include="SingleSolutionDisplay.py">
+      <Filter>Scripts</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

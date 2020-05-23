@@ -4,6 +4,7 @@
 
 FluxRoe::FluxRoe(int new_dim) : Flux(new_dim)
 {
+	roevectors = std::vector<StateVector2D>(4);
 }
 
 
@@ -14,8 +15,8 @@ FluxRoe::~FluxRoe()
 //Roe solver
 StateVector2D FluxRoe::calcDissip(std::pair<StateVector2D, StateVector2D> leftrightstates, double nx, double ny)
 {
-	StateVector2D prim_left = fluid->cons2prim(leftrightstates.first);
-	StateVector2D prim_right = fluid->cons2prim(leftrightstates.second);
+	prim_left = fluid->cons2prim(leftrightstates.first);
+	prim_right = fluid->cons2prim(leftrightstates.second);
 
 	double sqrtrho_right = std::sqrt(prim_right[0]);
 	double sqrtrho_left = std::sqrt(prim_left[0]);
@@ -42,8 +43,6 @@ StateVector2D FluxRoe::calcDissip(std::pair<StateVector2D, StateVector2D> leftri
 	double c = std::sqrt((fluid->getGamma() - 1)*(h - 0.5*(u*u + v * v)));
 
 	//Calculate transformation matrices
-	std::vector<StateVector2D> roevectors;
-	roevectors.resize(4);
 	roevectors[0] = {
 		1,
 		u - c * nx,
@@ -75,7 +74,6 @@ StateVector2D FluxRoe::calcDissip(std::pair<StateVector2D, StateVector2D> leftri
 	double dunorm = (prim_right[1] - prim_left[1])* nx + (prim_right[2] - prim_left[2])*ny;
 	double dupar = -(prim_right[1] - prim_left[1])* ny + (prim_right[2] - prim_left[2])*nx;
 
-	StateVector2D roefactors;
 	roefactors[0] = (dp - rho * c*dunorm) / (2 * c*c);
 	roefactors[1] = rho * dupar;
 	roefactors[2] = -(dp - c * c * drho) / (c*c);
@@ -85,13 +83,11 @@ StateVector2D FluxRoe::calcDissip(std::pair<StateVector2D, StateVector2D> leftri
 	double unorm_L = prim_left[1] * nx + prim_left[2] * ny;
 	double unorm_R = prim_right[1] * nx + prim_right[2] * ny;
 
-	StateVector2D eigenvals;
 	eigenvals[0] = unorm - c;// std::min(unorm - c, unorm_L - c);
 	eigenvals[1] = unorm;
 	eigenvals[2] = unorm;
 	eigenvals[3] = unorm + c; //std::max(unorm + c, unorm_R + c);
 
-	StateVector2D dissip;
 	dissip.fill(0.0);
 	for (int i = 0; i < 4; i++)
 	{

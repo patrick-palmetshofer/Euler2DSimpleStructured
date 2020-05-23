@@ -84,6 +84,8 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <FloatingPointExceptions>true</FloatingPointExceptions>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -132,6 +134,8 @@
     <None Include="mesh\Grid10degDENSE.grd" />
     <None Include="mesh\Grid20deg.grd" />
     <None Include="mesh\Grid30deg.grd" />
+    <None Include="SingleSolutionDisplay.py" />
+    <None Include="solutionDisplay.py" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="config1.txt" />

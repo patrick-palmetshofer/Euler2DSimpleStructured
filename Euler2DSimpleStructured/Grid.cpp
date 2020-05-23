@@ -29,6 +29,7 @@ double Grid::getnComponent(int i, int j, int compdim, int physdim)
 		else if (physdim == 1)
 			return getnEtaYs(i, j);
 	}
+	throw;
 	return std::numeric_limits<double>::infinity();
 }
 
@@ -80,33 +81,15 @@ void Grid::readGridPro(std::string filename)
 
 
 	//Allocate all matrices
+	nxi_xs.resize(nxi_cells + 1, std::vector<double>(neta_cells));
+	nxi_ys.resize(nxi_cells + 1, std::vector<double>(neta_cells));
+	Sxis.resize(nxi_cells + 1, std::vector<double>(neta_cells));
 
-	nxi_xs.resize(nxi_cells + 1);
-	nxi_ys.resize(nxi_cells + 1);
-	Sxis.resize(nxi_cells + 1);
+	neta_xs.resize(nxi_cells, std::vector<double>(neta_cells+1));
+	neta_ys.resize(nxi_cells, std::vector<double>(neta_cells + 1));
+	Setas.resize(nxi_cells, std::vector<double>(neta_cells + 1));
 
-	neta_xs.resize(nxi_cells);
-	neta_ys.resize(nxi_cells);
-	Setas.resize(nxi_cells);
-
-	for (int i = 0; i < nxi_xs.size(); i++)
-	{
-		nxi_xs[i].resize(neta_cells);
-		nxi_ys[i].resize(neta_cells);
-		Sxis[i].resize(neta_cells);
-	}
-	for (int i = 0; i < neta_xs.size(); i++)
-	{
-		neta_xs[i].resize(neta_cells + 1);
-		neta_ys[i].resize(neta_cells + 1);
-		Setas[i].resize(neta_cells + 1);
-	}
-
-	volumes.resize(nxi_cells);
-	for (int i = 0; i < volumes.size(); i++)
-	{
-		volumes[i].resize(neta_cells);
-	}
+	volumes.resize(nxi_cells, std::vector<double>(neta_cells));
 
 
 	//Fill matrices
@@ -148,5 +131,19 @@ void Grid::readGridPro(std::string filename)
 			volumes[i][j] = std::abs(0.5*((points[i + 1][j + 1][0] - points[i][j][0])*(points[i][j + 1][1] - points[i + 1][j][1]) - (points[i][j + 1][0] - points[i + 1][j][0])*(points[i + 1][j + 1][1] - points[i][j][1])));
 		}
 	}
+
+	double xmax = 0, xmin = 0, ymax = 0, ymin = 0;
+	for (auto& row : points)
+	{
+		for (auto& elem : row)
+		{
+			xmax = std::max(xmax, elem[0]);
+			xmin = std::min(xmin, elem[0]);
+			ymax = std::max(ymax, elem[1]);
+			ymin = std::min(ymin, elem[1]);
+
+		}
+	}
+	maxDistance = { xmax-xmin,ymax-ymin };
 }
 

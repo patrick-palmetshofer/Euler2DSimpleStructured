@@ -8,6 +8,14 @@ StateVector2D operator* (double scalar, StateVector2D v)
 	return res;
 }
 
+StateVector2D operator*= (double scalar, StateVector2D v)
+{
+	StateVector2D res;
+	for (int i = 0; i < 2 + 2; i++)
+		res[i] = scalar * v[i];
+	return res;
+}
+
 StateVector2D operator* (StateVector2D v, double scalar)
 {
 	StateVector2D res;

@@ -14,7 +14,10 @@ protected:
 	//Calculate timestep for local timestepping
 	double calcTimeStep(int i, int j, StateMatrix2D * conservative);
 
+	StateVector2D p;
 	double maxCFL = 0.5;
+
+	StateVector2D Dxi, Deta;
 
 public:
 	TimeStepper();

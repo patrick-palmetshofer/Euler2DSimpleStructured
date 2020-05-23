@@ -11,11 +11,10 @@ class ReconstructMUSCL :
 {
 private:
 	std::unique_ptr<Limiter> limiter;
-	Grid * grid;
 
 	//MUSCL parameters
-	double reconstruct_eps;
-	double reconstruct_kappa;
+	double reconstruct_eps = 1;
+	double reconstruct_kappa = -1;
 
 	StateVector2D leftdiff, diff, rightdiff;
 	StateVector2D left_diff, right_diff;

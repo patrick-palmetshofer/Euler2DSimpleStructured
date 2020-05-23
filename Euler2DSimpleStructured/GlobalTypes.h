@@ -130,40 +130,32 @@ namespace Euler
 	}
 
 
-	//Checks for errors in matrices, used for debugging
-	inline bool checkNaN(StateMatrix2D &m)
+	inline bool checkNaN(StateVector2D *m)
 	{
-		bool ret = false;
-		for (int i = 0; i < m.size(); i++)
+		for (int k = 0; k < m->size(); k++)
 		{
-			for (int j = 0; j < m[i].size(); j++)
+			if (!std::isfinite((*m)[k]))
 			{
-				for (int k = 0; k < m[i][j].size(); k++)
-				{
-					if (!std::isfinite(m[i][j][k]))
-					{
-						ret = true;
-						std::cout << "Calculation aborted due to NaN value at i=" << i << " j=" << j << "\n";
-						//throw;
-					}
-				}
+				return true;
 			}
 		}
-		return ret;
+		return false;
 	}
 
-	inline bool checkNaN(StateVector2D &m)
+	//Checks for errors in matrices, used for debugging
+	inline bool checkNaN(StateMatrix2D *m)
 	{
-		bool ret = false;
-		for (int k = 0; k < m.size(); k++)
+		int xi_size = m->size();
+		int eta_size = (*m)[0].size();
+		for (int i = 0; i < xi_size; i++)
 		{
-			if (!std::isfinite(m[k]))
+			for (int j = 0; j < eta_size; j++)
 			{
-				ret = true;
-				//throw;
+				if (checkNaN(&(*m)[i][j]))
+					return true;
 			}
 		}
-		return ret;
+		return false;
 	}
 }
 

@@ -37,20 +37,58 @@ void Boundary::setLeft()
 
 void Boundary::init()
 {
-	//int nmax = 0, nconst = 0;
-	//if (dim)
-	//{
-	//}
-	//if (dir < 0)
-	//{
+	if (cell_inds.empty())
+	{
+		if (dim == 0)
+		{
+			int dirind = 0;
+			if (dir == -1)
+				dirind = grid->getnxiCells();
+			for (int i = 0; i < grid->getnetaCells(); i++)
+				cell_inds.push_back({ dirind, i });
+		}
+		else if (dim == 1)
+		{
+			int dirind = 0;
+			if (dir == -1)
+				dirind = grid->getnetaCells();
+			for (int i = 0; i < grid->getnxiCells(); i++)
+				cell_inds.push_back({ i, dirind });
+		}
+		else
+			throw;
+	}
+}
 
-	//}
-	//cell_inds.reserve(nmax);
-	//for (int i = 0; i < nxi; ++i)
-	//{
-	//	cell_inds[i][0] = i;
-	//	cell_inds[i][1] = nconst;
-	//}
+void Boundary::apply()
+{
+	std::pair<StateVector2D, StateVector2D> leftrightstates;
+	int physdim1 = 0, physdim2 = 1;
+	if (dim == 1) 
+	{
+		physdim1++; physdim2--;
+	}
+
+	for (auto &inds : cell_inds)
+	{
+		if (dir == 1)
+		{
+			leftrightstates.second = (*conservative)[inds[0]][inds[1]];
+			leftrightstates.first = getGhostState(inds);
+		}
+		else if (dir == -1)
+		{
+			std::array<int,2> locinds = { inds[0] - physdim2, inds[1] - physdim1 };
+			leftrightstates.first = (*conservative)[locinds[0]][locinds[1]];
+			leftrightstates.second = getGhostState(locinds);
+		}
+
+		leftrightstates.first = Euler::swap(leftrightstates.first, dim + 1);
+		leftrightstates.second = Euler::swap(leftrightstates.second, dim + 1);
+
+		StateVector2D fl = flux->calcFlux(leftrightstates, grid->getnComponent(inds[0], inds[1], dim, physdim1), grid->getnComponent(inds[0], inds[1], dim, physdim2));
+		flux->setBoundaryFlux(inds[0], inds[1], Euler::swap(fl,dim+1));
+	}
 }
 
 StateVector2D SupersonicInlet::getGhostState(std::array<int, 2> ind)
@@ -78,11 +116,11 @@ StateVector2D SlipWall::getGhostState(std::array<int, 2> ind)
 		break;
 	}
 
-	double unorm = conservative->at(i).at(j)[1] * nx + conservative->at(i).at(j)[2]* ny;
-	ghost_state[0] = conservative->at(i).at(j)[0];
-	ghost_state[1] = conservative->at(i).at(j)[1] - 2 * unorm*nx;
-	ghost_state[2] = conservative->at(i).at(j)[2] - 2 * unorm*ny;
-	ghost_state[3] = conservative->at(i).at(j)[3];
+	double unorm = (*conservative)[i][j][1] * nx + (*conservative)[i][j][2]* ny;
+	ghost_state[0] = (*conservative)[i][j][0];
+	ghost_state[1] = (*conservative)[i][j][1] - 2 * unorm*nx;
+	ghost_state[2] = (*conservative)[i][j][2] - 2 * unorm*ny;
+	ghost_state[3] = (*conservative)[i][j][3];
 
 	return ghost_state;
 }
@@ -106,7 +144,7 @@ StateVector2D SupersonicOutlet::getGhostState(std::array<int, 2> ind)
 		ny = grid->getnEtaYs(i, j);
 		break;
 	}
-	ghost_state = conservative->at(i).at(j);
+	ghost_state = (*conservative)[i][j];
 	
 	return ghost_state;
 }
@@ -131,8 +169,8 @@ StateVector2D BoundaryLODI::getGhostState(std::array<int, 2> ind)
 		break;
 	}
 
-	StateVector2D &c = conservative->at(i).at(j);
-	StateVector2D &cneg = conservative->at(ineg).at(jneg);
+	StateVector2D &c = (*conservative)[i][j];
+	StateVector2D &cneg = (*conservative)[ineg][jneg];
 
 	/*	cpos = c + (c - cneg);*/
 	double u = c[2] / c[0];
@@ -163,6 +201,7 @@ StateVector2D BoundaryLODI::getGhostState(std::array<int, 2> ind)
 		ghost_state = c + (c - cneg);
 	}
 
+	Euler::checkNaN(&ghost_state);
 	return ghost_state;
 }
 

@@ -71,5 +71,5 @@ std::pair<StateVector2D, StateVector2D> ReconstructMUSCL::reconstructStates(int 
 	//Fall back if near boundary
 	if (inegneg < 0 || jnegneg < 0 || jpos >= grid->getnetaCells() || ipos >= grid->getnxiCells())
 		return Reconstruct::reconstructStates(i, j, dim);
-	return reconstructStatesMUSCL(conservative->at(inegneg).at(jnegneg), conservative->at(ineg).at(jneg), conservative->at(i).at(j), conservative->at(ipos).at(jpos));
+	return reconstructStatesMUSCL((*conservative)[inegneg][jnegneg], (*conservative)[ineg][jneg], (*conservative)[i][j], (*conservative)[ipos][jpos]);
 }

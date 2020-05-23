@@ -14,8 +14,8 @@ TimeStepper::~TimeStepper()
 //Calculates maximum time step for a single cell (does not apply maxCFL)
 double TimeStepper::calcTimeStep(int i, int j, StateMatrix2D * conservative)
 {
-	StateVector2D p = fluid->cons2prim(conservative->at(i).at(j));
-	double c = fluid->calcSoundSpeedcons(conservative->at(i).at(j));// std::sqrt(gamma*(gamma - 1)*(p[3] - 0.5*(p[1] * p[1] + p[2] * p[2])));
+	p = fluid->cons2prim((*conservative)[i][j]);
+	double c = fluid->calcSoundSpeedcons((*conservative)[i][j]);// std::sqrt(gamma*(gamma - 1)*(p[3] - 0.5*(p[1] * p[1] + p[2] * p[2])));
 
 	double Uxi_velnorm = grid->getnXiXs(i,j) * p[1] + grid->getnXiYs(i, j) * p[2];
 	double Ueta_velnorm = grid->getnEtaXs(i, j) * p[1] + grid->getnEtaYs(i, j) * p[2];
@@ -33,9 +33,11 @@ double TimeStepper::calcTimeStep(int i, int j, StateMatrix2D * conservative)
 double TimeStepper::calcTimeStep(StateMatrix2D * conservative)
 {
 	double dt = 1e19;
-	for (int i = 0; i < conservative->size(); i++)
+	int xi_size = conservative->size();
+	int eta_size = (*conservative)[0].size();
+	for (int i = 0; i < xi_size; i++)
 	{
-		for (int j = 0; j < conservative->at(0).size(); j++)
+		for (int j = 0; j < eta_size; j++)
 		{
 			//double dtlocal = std::min(1 / r_xi, 1 / r_eta);
 			double dtlocal = calcTimeStep(i, j,conservative);

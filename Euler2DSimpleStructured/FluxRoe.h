@@ -4,6 +4,13 @@
 class FluxRoe :
 	public Flux
 {
+private:
+	std::vector<StateVector2D> roevectors;
+	StateVector2D roefactors;
+	StateVector2D eigenvals;
+	StateVector2D dissip;
+	StateVector2D prim_left;
+	StateVector2D prim_right;
 public:
 	FluxRoe(int new_dim);
 	~FluxRoe();

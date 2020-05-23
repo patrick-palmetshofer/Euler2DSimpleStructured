@@ -3,8 +3,6 @@
 class TimeStepperLocal :
 	public TimeStepper
 {
-private:
-	
 public:
 	TimeStepperLocal();
 	~TimeStepperLocal();
