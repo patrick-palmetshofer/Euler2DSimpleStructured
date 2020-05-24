@@ -22,8 +22,8 @@ double Solution::calcResidualL2(StateMatrix2D &o, StateMatrix2D &n)
 			for (int k = 0; k < 4; k++)
 			{
 				double normk = o[0][0][k];
-				if (normk == 0)
-					normk = o[0][0][1];
+				if (k == 1 || k == 2)
+					normk = o[0][0][1] + o[0][0][2];
 				double temp = (n[i][j][k] - o[i][j][k]) / normk;
 				sumres += temp * temp;
 			}
@@ -42,8 +42,8 @@ StateVector2D Solution::calcResidualsL2(StateMatrix2D &o, StateMatrix2D &n)
 	{
 		double sumres = 0;
 		double normk = o[0][0][k];
-		if (normk == 0)
-			normk = o[0][0][1];
+		if (k == 1 || k == 2)
+			normk = o[0][0][1] + o[0][0][2];
 
 		for (int i = 0; i < n.size(); i++)
 		{
@@ -60,6 +60,7 @@ StateVector2D Solution::calcResidualsL2(StateMatrix2D &o, StateMatrix2D &n)
 		sumres = std::sqrt(sumres);
 		res[k] = sumres;
 	}
+	v_residuals_L2.push_back(res);
 	return res;
 }
 
@@ -74,8 +75,8 @@ double Solution::calcResidualLinfty(StateMatrix2D &o, StateMatrix2D &n)
 			for (int k = 0; k < n[0][0].size(); k++)
 			{
 				double normk = o[0][0][k];
-				if (normk == 0)
-					normk = o[0][0][1];
+				if (k == 1 || k == 2)
+					normk = o[0][0][1]+ o[0][0][2];
 				double temp = std::abs((n[i][j][k] - o[i][j][k]) / normk);
 				if (temp > res)
 				{
@@ -98,8 +99,8 @@ StateVector2D Solution::calcResidualsLinfty(StateMatrix2D &o, StateMatrix2D &n)
 	{
 		res[k] = 0;
 		double normk = o[0][0][k];
-		if (normk == 0)
-			normk = o[0][0][1];
+		if (k == 1 || k == 2)
+			normk = o[0][0][1] + o[0][0][2];
 		for (int i = 0; i < n.size(); i++)
 		{
 			for (int j = 0; j < n[0].size(); j++)
@@ -115,6 +116,7 @@ StateVector2D Solution::calcResidualsLinfty(StateMatrix2D &o, StateMatrix2D &n)
 			}
 		}
 	}
+	v_residuals_Linfty.push_back(res);
 	return res;
 }
 
@@ -129,14 +131,16 @@ StateVector2D Solution::getResidualsLinfty()
 	return residuals_Linfty;
 }
 
-void Solution::writeSolution(std::string filename, StateMatrix2D p)
+void Solution::writeSolution(std::string filename, StateMatrix2D &c)
 {
 	//Write a set of primitive variables, with Temperature in place of e_t
+	if(p.size() != c.size() || p[0].size() != c[0].size())
+		p.resize(c.size(), std::vector<StateVector2D>(c[0].size()));
 	for (int i = 0; i < p.size(); i++)
 	{
 		for (int j = 0; j < p[0].size(); j++)
 		{
-			p[i][j] = fluid->cons2prim(p[i][j]);
+			p[i][j] = fluid->cons2prim(c[i][j]);
 			p[i][j][3] = (p[i][j][3] - 0.5*(p[i][j][2] * p[i][j][2] + p[i][j][1] * p[i][j][1]))*fluid->getGamma() / fluid->getCp();
 		}
 	}
@@ -145,7 +149,7 @@ void Solution::writeSolution(std::string filename, StateMatrix2D p)
 	std::ofstream stream;
 	try
 	{
-		stream.open(filename, std::ofstream::out);
+		stream.open(filename+".sol", std::ofstream::out);
 		stream << p.size() << ",\t" << p[0].size() << "\n";
 		stream << "rho" << ",\t" << "u" << ",\t" << "v" << ",\t" << "T" << "\n";
 		//Reserve add here
@@ -166,9 +170,21 @@ void Solution::writeSolution(std::string filename, StateMatrix2D p)
 	catch (std::ofstream::failure e) {
 		std::cerr << "Exception writing file\n";
 	}
+	writeResidual(v_residuals_L2, filename + "_L2.res");
+	writeResidual(v_residuals_Linfty, filename + "_Linfty.res");
 }
 
-void writeResidual(std::vector<StateVector2D> &residuals, std::string &filename)
+void Solution::writeSolution(StateMatrix2D & c)
+{
+	writeSolution(filename, c);
+}
+
+void Solution::writeSolution(StateMatrix2D & c, int i)
+{
+	writeSolution(filename+std::to_string(i), c);
+}
+
+void Solution::writeResidual(std::vector<StateVector2D> &residuals, std::string filename)
 {
 	std::ofstream stream;
 	try

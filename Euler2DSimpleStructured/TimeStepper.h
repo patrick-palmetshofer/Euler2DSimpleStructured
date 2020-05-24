@@ -23,8 +23,9 @@ public:
 	TimeStepper();
 	virtual ~TimeStepper();
 
-	void setFluid(Fluid * new_fluid) { fluid = new_fluid; };
-	void setGrid(Grid * new_grid) { grid = new_grid; };
+	inline void setFluid(Fluid * new_fluid) { fluid = new_fluid; };
+	inline void setGrid(Grid * new_grid) { grid = new_grid; };
+	void setCFL(double cfl) { maxCFL = cfl; };
 
 	virtual void execute(StateMatrix2D * conservative, StateMatrix2D * xi_fluxes, StateMatrix2D * eta_fluxes) = 0;
 };

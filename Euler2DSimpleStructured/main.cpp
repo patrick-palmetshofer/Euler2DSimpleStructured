@@ -14,10 +14,11 @@ int main(int argc, char* argv[])
 	std::unique_ptr<Solver> solver;
 
 	std::string configfile = "config.cfg";
-	//if (argc)
-	//{
-	//	configfile = argv[0];
-	//}
+	if (argc > 1)
+	{
+		std::vector<std::string> argList(argv + 1, argv + argc);
+		configfile = argv[0];
+	}
 
 	config.readConfig(configfile);
 

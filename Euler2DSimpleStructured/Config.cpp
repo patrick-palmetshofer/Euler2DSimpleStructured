@@ -174,6 +174,10 @@ void Config::solverRead(const std::vector<std::string>& strings)
 						else if (val == "vanalbada")
 							limiter = std::make_unique<LimiterVanAlbada>();
 					}
+					else if (key == "musclkappa")
+						recMUSCL->setKappa(std::stod(val));
+					else if (key == "musclepsilon")
+						recMUSCL->setEps(std::stod(val));
 				}
 				if (limiter == nullptr)
 					limiter = std::make_unique<NoLimiter>();

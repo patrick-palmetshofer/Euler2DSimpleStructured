@@ -6,7 +6,7 @@ from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 from matplotlib.colors import BoundaryNorm
 from matplotlib.ticker import MaxNLocator
 
-deg = "10"
+deg = "20"
 it = ""
 #1041.566000 555.500000 867.970000
 vel = "555.500000"
@@ -16,7 +16,9 @@ limiter = "with"
 gridpath = "mesh/Grid"+deg+"deg.grd"
 #solpath = "raw/"+limiter+"limiter/Grid"+deg+"deg"+vel+".res"
 
-solpath = "sol1000.sol"
+fname = "solution/test15000"
+
+solpath = fname+".sol"
 
 with open(gridpath) as f:
     first_line = f.readline()
@@ -134,7 +136,7 @@ figTt.colorbar(plot, ax = axTt)
 axTt.set_title("Total Temperature [K] phi="+str(deg)+"°, Ma="+str(round(Ma0,1)))
 #figTt.savefig("TotalTemp"+limiter+"Limiter"+deg+"deg"+vel+"vel"+".pgf")
 
-residualpath = "raw/"+limiter+"Limiter/Grid"+deg+"deg"+vel+"_residualsLinf.csv"
+residualpath = fname+"_Linfty.res"
 residuals = pd.read_csv(residualpath,delimiter=",\t")
 figRes, axRes = plt.subplots()
 #figRes.set_figheight(15)
@@ -142,7 +144,8 @@ figRes, axRes = plt.subplots()
 for col in residuals.columns:
     axRes.plot(residuals.index,residuals[col],label=col)
 axRes.set_yscale("log")
-axRes.set_title("Normalized Residual $L_\infty$  phi="+str(deg)+"°, Ma="+str(round(Ma0,1)))
+#axRes.set_title("Normalized Residual $L_\infty$  phi="+str(deg)+"°, Ma="+str(round(Ma0,1)))
+axRes.set_title("Normalized Residual $L_\infty$ ")
 axRes.set_xlabel("$L_\infty$")
 axRes.set_xlabel("Iteration")
 axRes.legend()
@@ -150,7 +153,7 @@ axRes.legend()
 axRes.grid()
 #figRes.savefig("ResidualsLInf"+limiter+"Limiter"+deg+"deg"+vel+"vel"+".pgf")
 
-residualpath = "raw/"+limiter+"Limiter/Grid"+deg+"deg"+vel+"_residualsL2.csv"
+residualpath = fname+"_L2.res"
 residuals = pd.read_csv(residualpath,delimiter=",\t")
 figRes, axRes = plt.subplots()
 #figRes.set_figheight(15)
@@ -158,7 +161,8 @@ figRes, axRes = plt.subplots()
 for col in residuals.columns:
     axRes.plot(residuals.index,residuals[col],label=col)
 axRes.set_yscale("log")
-axRes.set_title("Normalized Residual $L_2$  phi="+str(deg)+"°, Ma="+str(round(Ma0,1)))
+#axRes.set_title("Normalized Residual $L_2$  phi="+str(deg)+"°, Ma="+str(round(Ma0,1)))
+axRes.set_title("Normalized Residual $L_2$")
 axRes.set_xlabel("$L_2$")
 axRes.set_xlabel("Iteration")
 axRes.legend()

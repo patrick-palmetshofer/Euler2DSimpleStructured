@@ -39,12 +39,12 @@ void Flux::calcFluxes()
 	{
 		for (int j = xdim; j < grid->getnetaCells(); j++)
 		{
-			std::pair<StateVector2D, StateVector2D> leftrightstates = reconstruct->reconstructStates(i, j, dim);
+			leftrightstates = reconstruct->reconstructStates(i, j, dim);
 			double nx = grid->getnComponent(i, j, xdim, xdim);
 			double ny = grid->getnComponent(i, j, xdim, ydim);
 
-			std::pair<StateVector2D, StateVector2D> swapped = { swap(leftrightstates.first), swap(leftrightstates.second) };
-			StateVector2D flux = calcFlux(swapped,nx,ny);
+			leftrightstates = { swap(leftrightstates.first), swap(leftrightstates.second) };
+			flux = calcFlux(leftrightstates,nx,ny);
 
 			fluxes[i][j] = swap(flux);
 		}

@@ -5,6 +5,9 @@
 
 class Flux
 {
+private:
+	std::pair<StateVector2D, StateVector2D> leftrightstates;
+	StateVector2D flux;
 protected:
 	Reconstruct * reconstruct;
 	Fluid * fluid;

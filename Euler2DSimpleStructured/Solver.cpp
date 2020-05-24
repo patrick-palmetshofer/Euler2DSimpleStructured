@@ -55,6 +55,7 @@ void Solver::crossPopulatePointers()
 {
 	stepper->setGrid(grid.get());
 	stepper->setFluid(fluid.get());
+	stepper->setCFL(maxCFL);
 
 	reconstruct->setGrid(grid.get());
 
@@ -99,84 +100,6 @@ void Solver::setInitialCondition()
 	}
 }
 
-//void Solver::setCharacteristicBoundaryRightOutlet()
-//{
-//	for (int j = 0; j < neta_cells + 1; j++)
-//	{
-//		const StateVector2D &cpos = conservative[nxi_cells + 1][j];
-//		const StateVector2D &c = conservative[nxi_cells][j];
-//		const StateVector2D &cneg = conservative[nxi_cells-1][j];
-//		double u = c[1] / c[0];
-//		double sound = calcSoundSpeedcons(c);
-//		double rho = c[0];
-//
-//		double dx = (points[nxi_cells][j][0] - points[nxi_cells-1][j][0]);
-//		double drho = (c[0] - cneg[0]);
-//		double dp = calcPcons(c) - calcPcons(cneg);
-//		double du = (c[1] / c[0] - cneg[1] / cneg[0]);
-//
-//		double L1 = (u - sound)*(dp - c[0] * sound*du)/dx;
-//		double L2 = u * (sound*sound*drho - dp) / dx;
-//		double L3 = u * (c[2]/c[0] - cneg[2]/cneg[0]) / dx;
-//		double L5 = (u + sound)*(dp + c[0] * sound*du) / dx;
-//
-//		double p = calcPcons(cpos);
-//		p = p - dt * 0.5*(L5 + L1);
-//
-//		cpos[2] = cpos[2] - dt * cpos[0] * L3;
-//		cpos[0] = cpos[0] - dt * (L2 + 0.5*(L5 + L1)) / (sound*sound);
-//		cpos[1] = cpos[1] - dt*(L5 - L1) / (2 * sound);
-//		cpos[3] = p / (gamma - 1) + 0.5*(cpos[1] * cpos[1] + cpos[2] * cpos[2]) / cpos[0];
-//	}
-//}
-//
-//void Solver::setCharacteristicBoundaryUpperOutlet()
-//{
-//	for (int i = 0; i < nxi_cells + 1; i++)
-//	{
-//		const StateVector2D &cpos = conservative[i][neta_cells + 1];
-//		const StateVector2D &c = conservative[i][neta_cells];
-//		const StateVector2D &cneg = conservative[i][neta_cells-1];
-//		double u = c[2] / c[0];
-//		double sound = calcSoundSpeedcons(c);
-//		double rho = c[0];
-//
-//		double dx = (points[i][neta_cells][1] - points[i][neta_cells-1][1]);
-//
-//		double drho = c[0] - cneg[0];
-//		double dp = calcPcons(c) - calcPcons(cneg);
-//		double du = (c[2]/c[0] - cneg[2]/cneg[0]);
-//
-//		//double L1 = (u - sound)*(dp - c[0] * sound*du)/dx;
-//		double L2 = u * (sound*sound*drho - dp)/dx;
-//		double L3 = u * (c[1]/c[0] - cneg[1]/cneg[0]) / dx;
-//		double L5 = (u + sound)*(dp + rho * sound*du)/dx;
-//		//double MaMax = calcMacons(conservative[0][1]);
-//		double K = 0.58*(1 - 0.5*0.5)*sound / (points[0][neta_cells][1] - points[0][0][1]);
-//		double p = calcPcons(cpos);
-//		double L1 = K * (p - p_infty);
-//		//double L1 = 0;
-//
-//		
-//		p = p - dt * 0.5*(L5 + L1);
-//
-//		cpos[1] = cpos[1] - dt * cpos[0] * L3;
-//		cpos[0] = cpos[0] - dt * (L2 + 0.5*(L5 + L1)) / (sound*sound);
-//		cpos[2] = cpos[2] - dt*(L5 - L1) / (2 * sound);
-//		cpos[3] = p / (gamma - 1) + 0.5*(cpos[1] * cpos[1] + cpos[2] * cpos[2]) / cpos[0];
-//
-//		//cpos[0] = cpos[0] + dx / (sound*sound)*(L2 / (u + sound) + 0.5*(L5 / (u + sound) + L1 / (u - sound));
-//		//cpos[1] =
-//		double x = 0;
-//		x++;
-//	/*	StateVector2D prim = cons2prim(cpos);
-//		prim[0] = prim[0] - dt * (L2 + +0.5*(L5 + L1) / (sound*sound));
-//		prim[2] = prim[2] - (L5 - L1) / (2 * rho*sound)*rho;
-//		prim[1] = prim[1] - dt * rho*L3;
-//		prim[3] = p / (gamma - 1)*rho + 0.5*(c[1] * c[1] + c[2] * c[2]) / c[0];*/
-//	}
-//}
-
 double Solver::getTime()
 {
 	return time;
@@ -186,60 +109,6 @@ void Solver::allocateConservative()
 {
 	conservative.resize(grid->getnxiCells(), std::vector<StateVector2D>(grid->getnetaCells()));
 }
-
-//void Solver::solve(double vel, int angle, double eps, double kappa, bool limit, double convcrit)
-//{
-//	std::string meshpath = "../../../mesh/";
-//	std::string respath = "../../../solution/";
-//
-//	if (limit)
-//		respath += "withlimiter/";
-//	else
-//		respath += "nolimiter/";
-//
-//	std::string gridname = "Grid" + std::to_string(angle) + "deg";
-//	std::string velstr = std::to_string(vel);
-//	std::string infile = meshpath + gridname + ".grd";
-//	std::string outfile = respath + gridname + velstr + ".res";
-//	std::string residualfile = respath + gridname + velstr + "_residualsL2.csv";
-//	std::string residualinffile = respath + gridname + velstr + "_residualsLinf.csv";
-//
-//	Solver s(infile, eps, kappa);
-//
-//	if (!limit)
-//		s.disableLimiter();
-//
-//	s.setConsInlet(1.01325e5, vel, 0, 300);
-//	s.setConsInitial(1.01325e5, vel, 0, 300);
-//
-//	int maxsteps = 20000;
-//	std::vector<StateVector2D> residuals(maxsteps + 1);
-//	std::vector<StateVector2D> residualsinf(maxsteps + 1);
-//
-//	int i = 0;
-//	for (i = 0; i <= maxsteps; i++)
-//	{
-//		s.executeTimeStepLocal();
-//		residuals[i] = s.getResidualsL2();
-//		residualsinf[i] = s.getResidualsLinfty();
-//		if (residuals[i][0] < convcrit)
-//			break;
-//		if (i % 1000 == 0)
-//		{
-//			std::cout << residuals[i][0] << "\t" << residuals[i][1] << "\t" << residuals[i][2] << "\t" << residuals[i][3] << "\n";
-//			//if (s.getResidual() < 1e-9)
-//			//	break;
-//		}
-//	}
-//
-//
-//	s.writeSolution(outfile);
-//	residuals.resize(i + 1);
-//	residualsinf.resize(i + 1);
-//
-//	writeResidual(residuals, residualfile);
-//	writeResidual(residualsinf, residualinffile);
-//}
 
 void Solver::solve()
 {
@@ -295,19 +164,16 @@ void Solver::solve()
 
 		stepper->execute(&conservative, xi_fluxes->get(), eta_fluxes->get());
 
+		if (Euler::checkNaN(&conservative))
+		{
+			solution->writeSolution(old_conservative, i-1);
+			throw;
+		}
+
 		solution->calcResidualsL2(old_conservative,conservative);
 		solution->calcResidualsLinfty(old_conservative,conservative);
-
+		
 		if (i % iter_write_interval == 0 || Euler::checkNaN(&conservative))
-			solution->writeSolution("sol"+std::to_string(i)+".sol", conservative);
+			solution->writeSolution(conservative,i);
 	}
 }
-
-//Apply Boundary condtitions
-//setBoundaryInletLeft();
-//setBoundaryLowerWall();
-////setBoundaryOutlet();
-////setBoundaryUpperOutlet();
-////setWalls();
-//setCharacteristicBoundaryRightOutlet();
-//setCharacteristicBoundaryUpperOutlet();

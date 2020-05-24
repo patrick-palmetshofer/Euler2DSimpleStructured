@@ -23,6 +23,9 @@ public:
 	ReconstructMUSCL();
 	~ReconstructMUSCL();
 
+	void setKappa(double kappa) { reconstruct_kappa = kappa; };
+	void setEps(double eps) { reconstruct_eps = eps; };
+
 	void setLimiter(std::unique_ptr<Limiter>& new_limiter) { limiter = std::move(new_limiter); };
 	std::pair<StateVector2D, StateVector2D> reconstructStatesMUSCL(const StateVector2D& c_left_left, const StateVector2D& c_left, const StateVector2D& c_right, const StateVector2D& c_right_right);
 
